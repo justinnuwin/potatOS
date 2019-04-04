@@ -17,7 +17,7 @@ potatOS.img: kernel.bin
 	mkdir -p boot
 	sudo mount /dev/loop2816 boot 
 	sudo grub-install --root-directory=$(HOME)boot --no-floppy --modules="normal part_msdos multiboot" /dev/loop9371
-	sudo cp -r .img/* boot 
+	sudo cp -r img/* boot 
 	sudo umount boot 
 	losetup -d /dev/loop9371
 	losetup -d /dev/loop2816
@@ -25,7 +25,7 @@ potatOS.img: kernel.bin
 
 kernel.bin: $(OBJECTS) linker.ld
 	$(LD) $(LDFLAGS) -o $@ -T linker.ld $(OBJECTS)
-	cp $@ .img/boot
+	cp $@ img/boot
 
 
 multiboot_header.o: multiboot_header.asm
