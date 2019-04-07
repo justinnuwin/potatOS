@@ -4,7 +4,7 @@ LD=x86_64-elf-ld
 LDFLAGS=-n 
 HOME=/home/cpe454/potatOS/
 
-OBJECTS=multiboot_header.o boot.o
+OBJECTS=multiboot_header.o boot.o long_mode_init.o
 
 potatOS.img: kernel.bin
 	dd if=/dev/zero of=$@ bs=512 count=32768
@@ -23,16 +23,19 @@ potatOS.img: kernel.bin
 	losetup -d /dev/loop2816
 	rm -r boot
 
-kernel.bin: $(OBJECTS) linker.ld
-	$(LD) $(LDFLAGS) -o $@ -T linker.ld $(OBJECTS)
+kernel.bin: linker.ld $(OBJECTS)
+	$(LD) $(LDFLAGS) -o $@ -T $^ 
 	cp $@ img/boot
-
 
 multiboot_header.o: multiboot_header.asm
 	$(AS) $(ASFLAGS) $<
 
 boot.o: boot.asm
 	$(AS) $(ASFLAGS) $<
+
+long_mode_init.o: long_mode_init.asm
+	$(AS) $(ASFLAGS) $<
+	
 
 .PHONY: clean
 
