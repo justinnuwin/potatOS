@@ -1,10 +1,12 @@
 AS=nasm
 ASFLAGS=-f elf64
+CC=x86_64-elf-gcc
+CFLAGS=-c -g -Wall -Werror -Wextra
 LD=x86_64-elf-ld
 LDFLAGS=-n 
 HOME=/home/cpe454/potatOS/
 
-OBJECTS=multiboot_header.o boot.o long_mode_init.o
+OBJECTS=multiboot_header.o boot.o long_mode_init.o kernel.o
 
 potatOS.img: kernel.bin
 	dd if=/dev/zero of=$@ bs=512 count=32768
@@ -35,6 +37,9 @@ boot.o: boot.asm
 
 long_mode_init.o: long_mode_init.asm
 	$(AS) $(ASFLAGS) $<
+
+kernel.o: kernel.c
+	$(CC) $(CFLAGS) $<
 	
 
 .PHONY: clean
