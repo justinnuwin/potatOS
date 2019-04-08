@@ -1,7 +1,8 @@
 #include "vga.hpp"
 
+#include <stddef.h>
 #include <stdbool.h>
-//#include "string.h"
+#include "string.h"
 
 VGA::VGA() {
     cursor_row = 0;
@@ -15,46 +16,56 @@ vga_char(char c, enum vga_color fg, enum vga_color bg, bool blink) {
     return res;
 }
 
-void VGA::clear() {
+void VGA::fill(enum vga_color color) {
     int count = VGA_WIDTH * VGA_HEIGHT;
     uint16_t *buffer = VGA_ADDR;
     while (count--) {
-        *buffer = vga_char(' ', VGA_COLOR_BLACK, VGA_COLOR_BLACK, false);
+        *buffer = vga_char(' ', VGA_COLOR_BLACK, color, false);
         buffer++;
     }
 }
 
-/*
-void VGA::scroll() {
-    memcpy(coord_to_addr(0, 0), coord_to_addr(1, 0), VGA_WIDTH * (VGA_HEIGHT - 1) * sizeof(*VGA_ADDR));
-}
-
-
-void VGA::display_char(char c) {
-    switch c {
-        case '\n':
-            current
-    *current_buffer = vga_char(c, VGA_COLOR_WHITE, VGA_COLOR_BLACK, false);
+void VGA::clear() {
+    fill(VGA_COLOR_BLACK);
 }
 
 uint16_t *VGA::coord_to_addr(unsigned row, unsigned col) {
     if (col > VGA_WIDTH || row > VGA_HEIGHT)
         return NULL;
-    return VGA_ADDR + row * VGA_HEIGHT + col; 
+    else
+        return VGA_ADDR + row * VGA_WIDTH + col; 
+}
+
+void VGA::scroll() {
+    // TODO: find out if we can read from the VGA memory mapped IO or if we
+    // have to keep track of the buffer ourselves
+    memcpy(coord_to_addr(0, 0), coord_to_addr(1, 0),
+           VGA_WIDTH * (VGA_HEIGHT - 1) * sizeof(*VGA_ADDR));
+}
+
+void VGA::display_char(char c) {
+    switch (c) {
+        case '\n':
+            if (++cursor_row >= VGA_HEIGHT)
+                scroll();
+            break;
+        case '\r':
+            cursor_col = 0;
+            break;
+        default:
+            *cursor_buffer = vga_char(c, VGA_COLOR_WHITE,
+                                      VGA_COLOR_BLACK, false);
+            break;
+    }
 }
 
 void VGA::increment_cursor() {
-    if (cursor_col >= VGA_WIDTH) {
+    if (++cursor_col >= VGA_WIDTH) {
         cursor_col = 0;
         cursor_row++;
     }
-    if (cursor_row >= VGA_HEIGHT) {
+    if (cursor_row >= VGA_HEIGHT)
         scroll();
-        cursor_row = 0;
-    }
+    cursor_buffer = coord_to_addr(cursor_row, cursor_col);
 }
 
-
-void VGA::newline() {
-
-    */

@@ -30,15 +30,17 @@ class VGA {
     public:
     VGA();
 //    void printk(const char *string);
+    void fill(enum vga_color color);
     void clear();
-//    void scroll();
-//    void display_char(char c);
+    void scroll();
+    void display_char(char c);
+    void increment_cursor();
 //    void display_string(const char *str);
     private:
     unsigned cursor_row;
     unsigned cursor_col;
     uint16_t *cursor_buffer;
-//    uint16_t *coord_to_addr(unsigned row, unsigned. col)
+    uint16_t *coord_to_addr(unsigned row, unsigned col);
 };
 
 #endif
