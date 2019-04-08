@@ -32,6 +32,7 @@ class VGA {
 //    void printk(const char *string);
     void fill(enum vga_color color);
     void clear();
+    void scroll_bg(enum vga_color color);
     void scroll();
     void display_char(char c);
     void increment_cursor();
