@@ -11,7 +11,7 @@ void kernel_main(void) {
     VGA vga;
     char c = ' ';
     while (1) {
-        vga.display_char(c);
+        vga.display_char(c, VGA_COLOR_BROWN, VGA_COLOR_LIGHT_MAGENTA);
         vga.increment_cursor();
         wait_a_little();
         if (c == '~')

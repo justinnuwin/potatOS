@@ -36,7 +36,7 @@ uint16_t *VGA::coord_to_addr(unsigned row, unsigned col) {
         return VGA_BUFFER_BASE_ADDR + row * VGA_WIDTH + col; 
 }
 
-void VGA::scroll_bg(enum vga_color color) {
+void VGA::scroll(enum vga_color color) {
     memcpy(coord_to_addr(0, 0), coord_to_addr(1, 0),
            VGA_WIDTH * (VGA_HEIGHT - 1) * sizeof(*VGA_BUFFER_BASE_ADDR));
     uint16_t *last_row = coord_to_addr(VGA_HEIGHT - 1, 0);
@@ -45,24 +45,28 @@ void VGA::scroll_bg(enum vga_color color) {
 }
 
 void VGA::scroll() {
-    scroll_bg(VGA_COLOR_BLACK);
+    scroll(VGA_COLOR_BLACK);
 }
 
-void VGA::display_char(char c) {
+void VGA::display_char(char c, enum vga_color fg, enum vga_color bg) {
     switch (c) {
         case '\n':
             if (++cursor_row >= VGA_HEIGHT)
-                scroll();
+                scroll(bg);
             break;
         case '\r':
             cursor_col = 0;
             break;
         default:
-            *cursor_buffer = vga_char(c, VGA_COLOR_WHITE,
-                                      VGA_COLOR_BLACK, false);
+            *cursor_buffer = vga_char(c, fg, bg, false);
             break;
     }
 }
+
+void VGA::display_char(char c) {
+    display_char(c, VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+}
+
 
 void VGA::increment_cursor() {
     if (++cursor_col >= VGA_WIDTH) {
