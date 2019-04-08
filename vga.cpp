@@ -7,7 +7,7 @@
 VGA::VGA() {
     cursor_row = 0;
     cursor_col = 0;
-    cursor_buffer = VGA_ADDR;
+    cursor_buffer = VGA_BUFFER_BASE_ADDR;
 }
 
 inline static uint16_t
@@ -18,7 +18,7 @@ vga_char(char c, enum vga_color fg, enum vga_color bg, bool blink) {
 
 void VGA::fill(enum vga_color color) {
     int count = VGA_WIDTH * VGA_HEIGHT;
-    uint16_t *buffer = VGA_ADDR;
+    uint16_t *buffer = VGA_BUFFER_BASE_ADDR;
     while (count--) {
         *buffer = vga_char(' ', VGA_COLOR_BLACK, color, false);
         buffer++;
@@ -30,17 +30,17 @@ void VGA::clear() {
 }
 
 uint16_t *VGA::coord_to_addr(unsigned row, unsigned col) {
-    if (col > VGA_WIDTH || row > VGA_HEIGHT)
+    if (col >= VGA_WIDTH || row >= VGA_HEIGHT)
         return NULL;
     else
-        return VGA_ADDR + row * VGA_WIDTH + col; 
+        return VGA_BUFFER_BASE_ADDR + row * VGA_WIDTH + col; 
 }
 
 void VGA::scroll() {
     // TODO: find out if we can read from the VGA memory mapped IO or if we
     // have to keep track of the buffer ourselves
     memcpy(coord_to_addr(0, 0), coord_to_addr(1, 0),
-           VGA_WIDTH * (VGA_HEIGHT - 1) * sizeof(*VGA_ADDR));
+           VGA_WIDTH * (VGA_HEIGHT - 1) * sizeof(*VGA_BUFFER_BASE_ADDR));
 }
 
 void VGA::display_char(char c) {

@@ -5,7 +5,7 @@
 
 static const int VGA_WIDTH = 80;
 static const int VGA_HEIGHT = 25;
-static uint16_t *const VGA_ADDR = (uint16_t *)0xb8000;
+static uint16_t *const VGA_BUFFER_BASE_ADDR = (uint16_t *)0xb8000;
 
 enum vga_color {
 	VGA_COLOR_BLACK = 0,
