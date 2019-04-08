@@ -36,13 +36,15 @@ class VGA {
     void scroll();
     void display_char(char c, enum vga_color fg, enum vga_color bg);
     void display_char(char c);
-    void increment_cursor();
-//    void display_string(const char *str);
+    void display_string(const char *str, enum vga_color fg, enum vga_color bg);
+    void display_string(const char *str);
     private:
     unsigned cursor_row;
     unsigned cursor_col;
     uint16_t *cursor_buffer;
     uint16_t *coord_to_addr(unsigned row, unsigned col);
+    void increment_cursor(enum vga_color bg);
+    void increment_cursor();
 };
 
 #endif

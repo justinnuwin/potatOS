@@ -7,16 +7,15 @@ void wait_a_little() {
     while (i--) {}
 }
 
+void wait_longer() {
+    int i = 5000000;
+    while (i--) {}
+}
+
 void kernel_main(void) {
     VGA vga;
-    char c = ' ';
     while (1) {
-        vga.display_char(c, VGA_COLOR_BROWN, VGA_COLOR_LIGHT_MAGENTA);
-        vga.increment_cursor();
-        wait_a_little();
-        if (c == '~')
-            c = ' ';
-        else
-            c++;
+        vga.display_string("Hello world!\n\r\0", VGA_COLOR_BROWN, VGA_COLOR_LIGHT_MAGENTA);
+        wait_longer();
     }
 }

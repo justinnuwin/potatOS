@@ -67,16 +67,38 @@ void VGA::display_char(char c) {
     display_char(c, VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 
-
-void VGA::increment_cursor() {
+void VGA::increment_cursor(enum vga_color bg) {
     if (++cursor_col >= VGA_WIDTH) {
         cursor_col = 0;
         cursor_row++;
     }
     if (cursor_row >= VGA_HEIGHT) {
-        scroll();
+        scroll(bg);
         cursor_row--;
     }
     cursor_buffer = coord_to_addr(cursor_row, cursor_col);
+}
+
+void VGA::increment_cursor() {
+    increment_cursor(VGA_COLOR_BLACK);
+}
+
+void VGA::display_string(const char *str, enum vga_color fg, enum vga_color bg) {
+    for (int i = 0; i < (int)strlen(str); i++) {
+        display_char(str[i], fg, bg);
+        switch (str[i]) {
+            case '\n':
+                break;
+            case '\r':
+                break;
+            default:
+                increment_cursor(bg);
+                break;
+        }
+    }
+}
+
+void VGA::display_string(const char *str) {
+    display_string(str, VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 
