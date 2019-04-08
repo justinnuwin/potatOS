@@ -37,8 +37,6 @@ uint16_t *VGA::coord_to_addr(unsigned row, unsigned col) {
 }
 
 void VGA::scroll_bg(enum vga_color color) {
-    // TODO: find out if we can read from the VGA memory mapped IO or if we
-    // have to keep track of the buffer ourselves
     memcpy(coord_to_addr(0, 0), coord_to_addr(1, 0),
            VGA_WIDTH * (VGA_HEIGHT - 1) * sizeof(*VGA_BUFFER_BASE_ADDR));
     uint16_t *last_row = coord_to_addr(VGA_HEIGHT - 1, 0);
