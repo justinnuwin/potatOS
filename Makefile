@@ -6,7 +6,7 @@ LD=x86_64-elf-ld
 LDFLAGS=-n 
 HOME=/home/cpe454/potatOS/
 
-OBJECTS=multiboot_header.o boot.o long_mode_init.o kernel.o string.o vga.o
+OBJECTS=multiboot_header.o boot.o long_mode_init.o kernel.o string.o vga.o printk.o
 
 potatOS.img: kernel.bin
 	dd if=/dev/zero of=$@ bs=512 count=32768
@@ -44,7 +44,10 @@ kernel.o: kernel.cpp kernel.h
 string.o: string.c string.h
 	$(CC) -o $@ $(CFLAGS) $< 
 
-vga.o: vga.cpp vga.hpp
+vga.o: vga.cpp vga.h
+	$(CC) -o $@ $(CFLAGS) $< 
+
+printk.o: printk.cpp printk.h
 	$(CC) -o $@ $(CFLAGS) $< 
 
 

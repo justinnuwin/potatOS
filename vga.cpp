@@ -1,43 +1,15 @@
-#include "vga.hpp"
+#include "vga.h"
 
-#include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdarg.h>
 #include "string.h"
 
+VGA VGA::vga;
+
 static const int VGA_WIDTH = 80;
 static const int VGA_HEIGHT = 25;
 static uint16_t *const VGA_BUFFER_BASE_ADDR = (uint16_t *)0xb8000;
-
-class VGA {
-    public:
-    void fill(enum vga_color color);
-    void clear();
-    void scroll(enum vga_color color);
-    void scroll();
-    void display_char(char c, enum vga_color fg, enum vga_color bg);
-    void display_char(char c);
-    void display_string(const char *str, enum vga_color fg, enum vga_color bg);
-    void display_string(const char *str);
-    private:
-    static VGA vga;
-    unsigned cursor_row;
-    unsigned cursor_col;
-    uint16_t *cursor_buffer;
-
-    VGA();
-    uint16_t *coord_to_addr(unsigned row, unsigned col);
-    uint16_t *coord_to_addr();
-    void increment_cursor(enum vga_color bg);
-    void increment_cursor();
-
-    friend void clear_screen();
-    friend void fill_screen(enum vga_color color);
-    friend void printk(const char *fmt, ...);
-};
-
-VGA VGA::vga;
 
 VGA::VGA() {
     cursor_row = 0;
@@ -144,48 +116,4 @@ void clear_screen() {
 
 void fill_screen(enum vga_color color) {
     VGA::vga.fill(color);
-}
-
-void printk(const char *fmt, ...) {
-    va_list vl;
-    va_start(vl, fmt);
-    while (*fmt) {
-        if (*fmt == '%') {
-            switch (*(fmt + 1)) {
-                case '%':
-                    VGA::vga.display_char('%');
-                    VGA::vga.increment_cursor();
-                    break;
-                case 'd':
-                    break;
-                case 'u':
-                    break;
-                case 'x':
-                    break;
-                case 'c':
-                    break;
-                case 'p':
-                    break;
-                case 'h':
-                    break;
-                case 'l':
-                    break;
-                case 'q':
-                    break;
-                case 's':
-                    break;
-                case NULL:
-                    return;
-                default:
-                    break;
-            }
-            fmt++;
-        } else {
-            VGA::vga.display_char(*fmt);
-            if (*fmt != '\n' && *fmt != '\r')
-                VGA::vga.increment_cursor();
-        }
-        fmt++;
-    }
-    va_end(vl);
 }

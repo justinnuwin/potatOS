@@ -1,6 +1,7 @@
 #include "kernel.h"
 
-#include "vga.hpp"
+#include "vga.h"
+#include "printk.h"
 
 void wait_a_little() {
     int i = 100000;
