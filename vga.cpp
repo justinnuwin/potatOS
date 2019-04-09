@@ -11,7 +11,6 @@ static uint16_t *const VGA_BUFFER_BASE_ADDR = (uint16_t *)0xb8000;
 
 class VGA {
     public:
-    VGA();
     void fill(enum vga_color color);
     void clear();
     void scroll(enum vga_color color);
@@ -26,10 +25,12 @@ class VGA {
     unsigned cursor_col;
     uint16_t *cursor_buffer;
 
+    VGA();
     uint16_t *coord_to_addr(unsigned row, unsigned col);
     uint16_t *coord_to_addr();
     void increment_cursor(enum vga_color bg);
     void increment_cursor();
+
     friend void printk(const char *fmt, ...);
 };
 
