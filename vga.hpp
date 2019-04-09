@@ -20,6 +20,8 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
+void clear_screen();
+void fill_screen(enum vga_color color);
 void printk(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
 #endif

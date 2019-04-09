@@ -13,8 +13,14 @@ void wait_longer() {
 }
 
 void kernel_main(void) {
+    clear_screen();
+    wait_a_little();
+    fill_screen(VGA_COLOR_BROWN);
+    wait_a_little();
+    clear_screen();
+
     while (1) {
-        printk("%d");
+        printk("%%boobs!%d%%\n\r");
         wait_longer();
     }
 }

@@ -1,6 +1,7 @@
 #include "string.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 void *memset(void *ptr, char value, size_t num) {
     uint8_t *p = (uint8_t *)ptr; 
@@ -23,3 +24,14 @@ size_t strlen(const char *str) {
         length++;
     return length;
 }
+
+const char *strchr(const char *str, char c) {
+    while (*str != c) {
+        if (!*str)
+            return NULL;
+        else
+            str++;
+    }
+    return str;
+}
+

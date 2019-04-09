@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include "string.h"
 
 static const int VGA_WIDTH = 80;
@@ -31,6 +32,8 @@ class VGA {
     void increment_cursor(enum vga_color bg);
     void increment_cursor();
 
+    friend void clear_screen();
+    friend void fill_screen(enum vga_color color);
     friend void printk(const char *fmt, ...);
 };
 
@@ -85,7 +88,7 @@ void VGA::scroll() {
     scroll(VGA_COLOR_BLACK);
 }
 
-// Do not call increment_cursor after this if displaying \n or \r
+// Do NOT call increment_cursor after this if displaying \n or \r
 void VGA::display_char(char c, enum vga_color fg, enum vga_color bg) {
     switch (c) {
         case '\n':
@@ -135,6 +138,54 @@ void VGA::display_string(const char *str) {
     display_string(str, VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 
+void clear_screen() {
+    VGA::vga.clear();
+}
+
+void fill_screen(enum vga_color color) {
+    VGA::vga.fill(color);
+}
+
 void printk(const char *fmt, ...) {
-    VGA::vga.display_string("Hello world!\n\r");
+    va_list vl;
+    va_start(vl, fmt);
+    while (*fmt) {
+        if (*fmt == '%') {
+            switch (*(fmt + 1)) {
+                case '%':
+                    VGA::vga.display_char('%');
+                    VGA::vga.increment_cursor();
+                    break;
+                case 'd':
+                    break;
+                case 'u':
+                    break;
+                case 'x':
+                    break;
+                case 'c':
+                    break;
+                case 'p':
+                    break;
+                case 'h':
+                    break;
+                case 'l':
+                    break;
+                case 'q':
+                    break;
+                case 's':
+                    break;
+                case NULL:
+                    return;
+                default:
+                    break;
+            }
+            fmt++;
+        } else {
+            VGA::vga.display_char(*fmt);
+            if (*fmt != '\n' && *fmt != '\r')
+                VGA::vga.increment_cursor();
+        }
+        fmt++;
+    }
+    va_end(vl);
 }
