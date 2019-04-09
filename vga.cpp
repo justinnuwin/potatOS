@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include "string.h"
 
+VGA VGA::vga;
+
 VGA::VGA() {
     cursor_row = 0;
     cursor_col = 0;
@@ -103,3 +105,7 @@ void VGA::display_string(const char *str) {
     display_string(str, VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 
+// global vga
+void printk(const char *fmt, ...) {
+    VGA::vga.display_string("Hello world!\n\r");
+}

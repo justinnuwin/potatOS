@@ -13,9 +13,8 @@ void wait_longer() {
 }
 
 void kernel_main(void) {
-    VGA vga;
     while (1) {
-        vga.display_string("Hello world!\n\r");
+        printk("%d");
         wait_longer();
     }
 }

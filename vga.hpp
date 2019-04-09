@@ -29,7 +29,6 @@ enum vga_color {
 class VGA {
     public:
     VGA();
-//    void printk(const char *string);
     void fill(enum vga_color color);
     void clear();
     void scroll(enum vga_color color);
@@ -39,6 +38,7 @@ class VGA {
     void display_string(const char *str, enum vga_color fg, enum vga_color bg);
     void display_string(const char *str);
     private:
+    static VGA vga;
     unsigned cursor_row;
     unsigned cursor_col;
     uint16_t *cursor_buffer;
@@ -47,6 +47,10 @@ class VGA {
     uint16_t *coord_to_addr();
     void increment_cursor(enum vga_color bg);
     void increment_cursor();
+    friend void printk(const char *fmt, ...);
 };
+
+// Uses global VGA vga
+void printk(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
 #endif
