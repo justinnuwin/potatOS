@@ -42,7 +42,9 @@ class VGA {
     unsigned cursor_row;
     unsigned cursor_col;
     uint16_t *cursor_buffer;
+
     uint16_t *coord_to_addr(unsigned row, unsigned col);
+    uint16_t *coord_to_addr();
     void increment_cursor(enum vga_color bg);
     void increment_cursor();
 };

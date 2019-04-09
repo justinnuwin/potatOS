@@ -16,6 +16,17 @@ vga_char(char c, enum vga_color fg, enum vga_color bg, bool blink) {
     return res;
 }
 
+uint16_t *VGA::coord_to_addr(unsigned row, unsigned col) {
+    if (col >= VGA_WIDTH || row >= VGA_HEIGHT)
+        return NULL;
+    else
+        return VGA_BUFFER_BASE_ADDR + row * VGA_WIDTH + col; 
+}
+
+uint16_t *VGA::coord_to_addr() {
+    return coord_to_addr(cursor_row, cursor_col);
+}
+
 void VGA::fill(enum vga_color color) {
     int count = VGA_WIDTH * VGA_HEIGHT;
     uint16_t *buffer = VGA_BUFFER_BASE_ADDR;
@@ -27,13 +38,7 @@ void VGA::fill(enum vga_color color) {
 
 void VGA::clear() {
     fill(VGA_COLOR_BLACK);
-}
-
-uint16_t *VGA::coord_to_addr(unsigned row, unsigned col) {
-    if (col >= VGA_WIDTH || row >= VGA_HEIGHT)
-        return NULL;
-    else
-        return VGA_BUFFER_BASE_ADDR + row * VGA_WIDTH + col; 
+    cursor_buffer = coord_to_addr(0, 0);
 }
 
 void VGA::scroll(enum vga_color color) {
@@ -48,19 +53,22 @@ void VGA::scroll() {
     scroll(VGA_COLOR_BLACK);
 }
 
+// Do not call increment_cursor after this if displaying \n or \r
 void VGA::display_char(char c, enum vga_color fg, enum vga_color bg) {
     switch (c) {
         case '\n':
-            if (++cursor_row >= VGA_HEIGHT)
+            if (++cursor_row >= VGA_HEIGHT) {
                 scroll(bg);
+                cursor_row--;   // Bring the cursor back after running ++cursor
+            }
             break;
         case '\r':
             cursor_col = 0;
             break;
         default:
             *cursor_buffer = vga_char(c, fg, bg, false);
-            break;
     }
+    cursor_buffer = coord_to_addr();
 }
 
 void VGA::display_char(char c) {
@@ -76,7 +84,7 @@ void VGA::increment_cursor(enum vga_color bg) {
         scroll(bg);
         cursor_row--;
     }
-    cursor_buffer = coord_to_addr(cursor_row, cursor_col);
+    cursor_buffer = coord_to_addr();
 }
 
 void VGA::increment_cursor() {
@@ -86,15 +94,8 @@ void VGA::increment_cursor() {
 void VGA::display_string(const char *str, enum vga_color fg, enum vga_color bg) {
     for (int i = 0; i < (int)strlen(str); i++) {
         display_char(str[i], fg, bg);
-        switch (str[i]) {
-            case '\n':
-                break;
-            case '\r':
-                break;
-            default:
-                increment_cursor(bg);
-                break;
-        }
+        if (str[i] != '\n' && str[i] != '\r')
+            increment_cursor(bg);
     }
 }
 
