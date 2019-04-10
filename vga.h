@@ -47,6 +47,8 @@ class VGA {
     friend void clear_screen();
     friend void fill_screen(enum vga_color color);
     friend int printk(const char *fmt, ...);
+    friend int atoi_display(long abs_value);
+    friend int print_decimal(int value);
 };
 
 void clear_screen();
