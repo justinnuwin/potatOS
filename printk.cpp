@@ -38,6 +38,10 @@ int print_decimal(int value) {
     return written;
 }
 
+int print_unsigned(unsigned value) {
+    return atoi_display((uint64_t)value);
+}
+
 // char a represents base for displaying letters in hex a:lowercase  A:uppercase
 int atoi_base16_display(uint64_t value, char a) {
     VGA::vga.display_string("0x");
@@ -89,7 +93,7 @@ int printk(const char *fmt, ...) {
                     written += print_decimal(va_arg(vl, int));
                     break;
                 case 'u':
-                    written += print_decimal((unsigned)va_arg(vl, unsigned));
+                    written += print_unsigned((unsigned)va_arg(vl, unsigned));
                     break;
                 case 'x':
                     written += print_hex(va_arg(vl, unsigned));

@@ -21,24 +21,15 @@ void kernel_main(void) {
     clear_screen();
 
     int i = 0;
+    int _i = 0;
     while (1) {
-        printk("%%%s%d %x%% %p \n\r", "Hello, world!", i, i, &i);
+        printk("%% %s %p %d %x %u\n\r", "Hello, world!", &i, i, i, _i);
         i++;
-        /*
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        wait_a_little();
-        */
-        wait_longer();
+        _i--;
+        int j = 30;
+        while (j) {
+            wait_a_little();
+            j--;
+        }
     }
 }
