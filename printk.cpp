@@ -47,12 +47,14 @@ int print_hex(unsigned value, char a) {
         char nibble = (value & mask) >> (index * 4);
         if (!first_char && (index == 0 || nibble > 0))
             first_char = true;
-        if (nibble > 9)
-            VGA::vga.display_char(nibble - 10 + a);
-        else
-            VGA::vga.display_char(nibble + '0');
-        VGA::vga.increment_cursor();
-        written++;
+        if (first_char) {
+            if (nibble > 9)
+                VGA::vga.display_char(nibble - 10 + a);
+            else
+                VGA::vga.display_char(nibble + '0');
+            VGA::vga.increment_cursor();
+            written++;
+        }
         index--;
         mask >>= 4;
     }
