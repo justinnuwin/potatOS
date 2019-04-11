@@ -49,6 +49,7 @@ class VGA {
     friend int printk(const char *fmt, ...);
     friend int atoi_display(long abs_value);
     friend int print_decimal(int value);
+    friend int print_hex(unsigned value, char a);
 };
 
 void clear_screen();

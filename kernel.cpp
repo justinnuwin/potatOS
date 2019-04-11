@@ -22,7 +22,8 @@ void kernel_main(void) {
 
     int i = 0;
     while (1) {
-        printk("%%Hello, world!%d%%\n\r", i++);
+        printk("%%Hello, world!%d %x%%\n\r", i, i++);
+        /*
         wait_a_little();
         wait_a_little();
         wait_a_little();
@@ -36,5 +37,7 @@ void kernel_main(void) {
         wait_a_little();
         wait_a_little();
         wait_a_little();
+        */
+        wait_longer();
     }
 }
