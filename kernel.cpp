@@ -5,21 +5,19 @@
 
 void wait_a_little() {
     int i = 100000;
-    while (i--) {}
+    while (i--);
 }
 
 void wait_longer() {
     int i = 50000000;
-    while (i--) {}
+    while (i--);
 }
 
 void kernel_main(void) {
-    clear_screen();
     splash_screen();
     wait_longer();
     wait_longer();
     clear_screen();
-    wait_a_little();
 
     int i = 0;
     int _i = 0;

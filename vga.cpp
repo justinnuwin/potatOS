@@ -119,11 +119,10 @@ void fill_screen(enum vga_color color) {
 }
 
 void splash_screen() {
-    const char *ascii_art = "\
+    const char *ascii_art = "\n\r\
+\n\r                                    potatOS\
 \n\r\
-\n\r									potatOS\
-\n\r\
-\n\r									.-\"'\"-.\
+\n\r                                    .-\"'\"-.\
 \n\r                                   |       |\
 \n\r                                 (`-._____.-')\
 \n\r                              ..  `-._____.-'  ..\
@@ -140,7 +139,8 @@ void splash_screen() {
 \n\r                       /  \\       _/ `~:~` \\_       /  \\\
 \n\r                      ||||\\)   .-'    / \\    `-.   (/||||\
 \n\r                      \\|||    (`.___.')-(`.___.')    |||/\
-\n\r                       '\"'     `-----'   `-----'     '\"'";
-
+\n\r                       '\"'     `-----'   `-----'     '\"'\
+\r";
+    clear_screen();
     VGA::vga.display_string(ascii_art, VGA_COLOR_BROWN, VGA_COLOR_BLACK);
 }
