@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "vga.h"
+#include "string.h"
 
 int atoi_display(unsigned long long abs_val) {
     int written = 0;
@@ -77,6 +78,7 @@ int printk(const char *fmt, ...) {
     va_start(vl, fmt);
     while (*fmt) {
         if (*fmt == '%') {
+            const char *str;
             switch (*(fmt + 1)) {
                 case '%':
                     VGA::vga.display_char('%');
@@ -107,6 +109,9 @@ int printk(const char *fmt, ...) {
                 case 'q':
                     break;
                 case 's':
+                    str = va_arg(vl, const char *);
+                    VGA::vga.display_string(str);
+                    written += strlen(str);
                     break;
                 case NULL:
                     return written;

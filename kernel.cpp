@@ -22,7 +22,7 @@ void kernel_main(void) {
 
     int i = 0;
     while (1) {
-        printk("%%Hello, world!%d %x%%\n\r", i, i);
+        printk("%%%s%d %x%% %p \n\r", "Hello, world!", i, i, &i);
         i++;
         /*
         wait_a_little();
