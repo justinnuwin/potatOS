@@ -3,14 +3,15 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "vga.h"
 
-int atoi_display(long abs_val) {
+int atoi_display(unsigned long long abs_val) {
     int written = 0;
-    long shifter = 1000000000000000000;     // Length of largest 64-bit unsigned
+    unsigned long long shifter = 1000000000000000000;     // Length of largest 64-bit unsigned
     bool first_digit = false;
     while (shifter) {
-        long digit = abs_val / shifter;
+        int digit = abs_val / shifter;
         if (!first_digit && (shifter == 1 || digit > 0))
             first_digit = true;
         if (first_digit) {
@@ -32,19 +33,20 @@ int print_decimal(int value) {
         value *= -1;
         written++;
     }
-    written += atoi_display(value);
+    written += atoi_display((uint64_t)value);
     return written;
 }
 
 // char a represents base for displaying letters in hex a:lowercase  A:uppercase
-int print_hex(unsigned value, char a) {
+int atoi_base16_display(uint64_t value, char a) {
     VGA::vga.display_string("0x");
     int written = 2;
-    int index = 7;              // hex char index of 32bit value (8 indexes)
-    unsigned mask = 0xf << 28;  // Assuming int is 32 bits
+    int index = 15;         // hex char index of 64bit value (16 indexes)
+    // uint64_t mask = 0xf << (64 - 4);
+    uint64_t mask = 0xf000000000000000;
     bool first_char = false;
     while (mask) {
-        char nibble = (value & mask) >> (index * 4);
+        char nibble = (char)((value & mask) >> (index * 4));
         if (!first_char && (index == 0 || nibble > 0))
             first_char = true;
         if (first_char) {
@@ -59,6 +61,10 @@ int print_hex(unsigned value, char a) {
         mask >>= 4;
     }
     return written;
+}
+
+int print_hex(unsigned value, char a) {
+    return atoi_base16_display((uint64_t)value, a);
 }
 
 int print_hex(unsigned value) {
@@ -87,8 +93,12 @@ int printk(const char *fmt, ...) {
                     written += print_hex(va_arg(vl, unsigned));
                     break;
                 case 'c':
+                    VGA::vga.display_char((char)va_arg(vl, int));   // variadic upconverts to int
+                    VGA::vga.increment_cursor();
+                    written++;
                     break;
                 case 'p':
+                    written += print_hex((uint64_t)va_arg(vl, void *));
                     break;
                 case 'h':
                     break;

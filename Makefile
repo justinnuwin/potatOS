@@ -3,7 +3,7 @@ ASFLAGS=-f elf64
 CC=x86_64-elf-g++
 CFLAGS=-ffreestanding -lgcc -Wall -Wextra -g -c
 LD=x86_64-elf-ld
-LDFLAGS=-n 
+LDFLAGS=-n -g
 HOME=/home/cpe454/potatOS/
 
 OBJECTS=multiboot_header.o boot.o long_mode_init.o kernel.o string.o vga.o printk.o
