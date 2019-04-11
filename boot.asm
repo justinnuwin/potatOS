@@ -15,12 +15,12 @@ start:
     call setup_page_tables
     call enable_paging
 
+    ; print `OK` to screen
+    mov dword [0xb8000], 0x2f4b2f4f
     
     lgdt [gdt64.pointer] ; load the 64-bit GDT 
     jmp gdt64.code:long_mode_start
     
-    ; print `OK` to screen
-    mov dword [0xb8000], 0x2f4b2f4f
     hlt
 
 check_multiboot:
