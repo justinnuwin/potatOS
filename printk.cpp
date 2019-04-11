@@ -10,15 +10,15 @@ int atoi_display(long abs_val) {
     long shifter = 1000000000000000000;     // Length of largest 64-bit unsigned
     bool first_digit = false;
     while (shifter) {
-        long result = abs_val / shifter;
-        if (!first_digit && (shifter == 1 || result >= 1))
+        long digit = abs_val / shifter;
+        if (!first_digit && (shifter == 1 || digit >= 1))
             first_digit = true;
         if (first_digit) {
-            VGA::vga.display_char((char)result + '0'); 
+            VGA::vga.display_char((char)digit + '0'); 
             VGA::vga.increment_cursor();
             written++;
         }
-        abs_val -= result;
+        abs_val -= digit * shifter;
         shifter /= 10;
     }
     return written;

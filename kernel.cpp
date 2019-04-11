@@ -23,6 +23,18 @@ void kernel_main(void) {
     int i = 0;
     while (1) {
         printk("%%Hello, world!%d%%\n\r", i++);
-        wait_longer();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
+        wait_a_little();
     }
 }
