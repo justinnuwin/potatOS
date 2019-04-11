@@ -117,3 +117,8 @@ void clear_screen() {
 void fill_screen(enum vga_color color) {
     VGA::vga.fill(color);
 }
+
+void splash_screen() {
+    const char *ascii_art = "\n\n\n.-\"'\"-.\n             |       |  \n           (`-._____.-')\n..  `-._____.-'  ..\n      .', :./'.== ==.`\\.: ,`.\n     : (  :   ___ ___:  ) ;\n     '._.:    |0| |0|    :._.'\n        /     `-'_`-'     \\\n      _.|/ \\       |._\n    .'.-|      (   )      |-.`.\n   //'  |  .-\"`\"`-'\"`\"-.|  `\\\\ \n  ||    |  `~\":-...-:\"~`  |    ||\n  ||     \\.    `---'    ./     ||\n||       '-._     _.-'       ||\n /  \\       _/ `~:~` \\_       /  \\\n||||\\).-'    / \\    `-.   (/||||\n\\|||    (`.___.')-(`.___.')    |||/\n '\"'     `-----'   `-----'     '\"'";
+    VGA::vga.display_string(ascii_art, VGA_COLOR_BROWN, VGA_COLOR_BLACK);
+}

@@ -15,10 +15,11 @@ void wait_longer() {
 
 void kernel_main(void) {
     clear_screen();
+    splash_screen();
     wait_longer();
-    fill_screen(VGA_COLOR_BROWN);
     wait_longer();
     clear_screen();
+    wait_a_little();
 
     int i = 0;
     int _i = 0;

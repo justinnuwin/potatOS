@@ -46,6 +46,7 @@ class VGA {
 
     friend void clear_screen();
     friend void fill_screen(enum vga_color color);
+    friend void splash_screen();
     friend int printk(const char *fmt, ...);
     friend int atoi_display(unsigned long long abs_value);
     friend int print_decimal(int value);
@@ -54,5 +55,6 @@ class VGA {
 
 void clear_screen();
 void fill_screen(enum vga_color color);
+void splash_screen();
 
 #endif
