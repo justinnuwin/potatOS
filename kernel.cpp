@@ -2,6 +2,8 @@
 
 #include "vga.h"
 #include "printk.h"
+#include "ps2.h"
+#include "keyboard.h"
 
 void wait_a_little() {
     int i = 100000;
@@ -14,21 +16,17 @@ void wait_longer() {
 }
 
 void kernel_main(void) {
+    if (poll_initialize_ps2())
+        poll_initialize_ps2_keyboard();
+    wait_longer();
+    clear_screen();
+
     splash_screen();
     wait_longer();
     wait_longer();
     clear_screen();
 
-    int i = 0;
-    int _i = 0;
     while (1) {
-        printk("%% %s %p %d %x %u\n\r", "Hello, world!", &i, i, i, _i);
-        i++;
-        _i--;
-        int j = 30;
-        while (j) {
-            wait_a_little();
-            j--;
-        }
+        display_keyboard_input();
     }
 }

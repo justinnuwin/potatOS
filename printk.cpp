@@ -76,6 +76,7 @@ int print_hex(unsigned value) {
     return print_hex(value, 'A');
 }
 
+// Printk will interpret \n as \n\r
 int printk(const char *fmt, ...) {
     int written = 0;
     va_list vl;
@@ -124,9 +125,13 @@ int printk(const char *fmt, ...) {
             }
             fmt++;
         } else {
-            VGA::vga.display_char(*fmt);
-            if (*fmt != '\n' && *fmt != '\r')
+            if (*fmt == '\n' || *fmt == '\r') {
+                VGA::vga.display_char('\n');
+                VGA::vga.display_char('\r');
+            } else {
+                VGA::vga.display_char(*fmt);
                 VGA::vga.increment_cursor();
+            }
             written++;
         }
         fmt++;

@@ -45,6 +45,8 @@ void VGA::fill(enum vga_color color) {
 
 void VGA::clear() {
     fill(VGA_COLOR_BLACK);
+    cursor_row = 0;
+    cursor_col = 0;
     cursor_buffer = coord_to_addr(0, 0);
 }
 
