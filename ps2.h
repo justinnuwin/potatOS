@@ -9,8 +9,8 @@
 #define PS2_OUTPUT_STATUS(x) ((x & 0x1) >> 0)
 #define PS2_INPUT_STATUS(x)  ((x & 0x2) >> 1)
 
-#define PS2_READ_BYTE_COMMAND(x)  (x + 0x20)
-#define PS2_WRITE_BYTE_COMMAND(x) (x + 0x60)
+#define PS2_READ_BYTE_COMMAND(x)  ((x + 0x20))
+#define PS2_WRITE_BYTE_COMMAND(x) ((x + 0x60))
 #define PS2_DISABLE_1ST_PORT 0xad
 #define PS2_ENABLE_1ST_PORT  0xae
 #define PS2_DISABLE_2ND_PORT 0xa7
@@ -44,6 +44,8 @@
 #define PS2_KB_SET_SCANCODE1        0x1
 #define PS2_KB_SET_SCANCODE2        0x2
 #define PS2_KB_SET_SCANCODE3        0x3
+#define PS2_KB_ENABLE_SCANNING      0xf4
+#define PS2_KB_DISABLE_SCANNING     0xf5
 
 
 /*
@@ -61,5 +63,6 @@ struct PS2_status {
 
 void poll_initialize_ps2();
 void poll_initialize_ps2_keyboard();
+uint8_t ps2_kb_read();
 
 #endif

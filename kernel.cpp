@@ -20,13 +20,12 @@ void kernel_main(void) {
     wait_longer();
     wait_longer();
     clear_screen();
-    printk("%s\n\r", "Finished initializing PS/2");
     poll_initialize_ps2_keyboard();
 
     int i = 0;
     int _i = 0;
     while (1) {
-        //printk("%x\n\r", ps2_poll_read());
+        // printk("%x\n\r", ps2_kb_read());
         i++;
         _i--;
         int j = 30;
