@@ -30,11 +30,13 @@ int poll_initialize_ps2() {
     ps2_poll_command(PS2_CMD_PORT, PS2_READ_BYTE_COMMAND(0));
     uint8_t ps2_cfg = ps2_poll_read();
     ps2_cfg &= ~PS2_CFG_1ST_PORT_INT_BIT;   // Disable port 1 interrupts
-    ps2_cfg &= ~PS2_CFG_2ND_PORT_INT_BIT;   // Disable port 2 interrupts
     ps2_cfg |= PS2_CFG_SYSTEM_FLAG_BIT;     // Set system flag, POSTed
     ps2_cfg &= ~PS2_CFG_1ST_PORT_CLOCK_BIT; // Enable port 1 clock
-    ps2_cfg |= PS2_CFG_2ND_PORT_CLOCK_BIT;  // Disable port 2 clock
     ps2_cfg &= ~PS2_CFG_1ST_PORT_XLATE_BIT; // Disable translation
+    if (PS2_CFG_2ND_PORT_CLOCK(ps2_cfg)) {  // 2 port PS/2 controller
+        ps2_cfg &= ~PS2_CFG_2ND_PORT_INT_BIT;   // Disable port 2 interrupts
+        ps2_cfg |= PS2_CFG_2ND_PORT_CLOCK_BIT;  // Disable port 2 clock
+    }
     // Poll write config to RAM byte 0
     ps2_poll_command(PS2_CMD_PORT, PS2_WRITE_BYTE_COMMAND(0));
     ps2_poll_command(PS2_DATA_PORT, ps2_cfg);
