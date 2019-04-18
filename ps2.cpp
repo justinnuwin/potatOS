@@ -1,8 +1,6 @@
 #include "ps2.h"
 
-#include <stdint.h>
 #include "asm_functions.h"
-
 #include "printk.h"
 
 uint8_t ps2_poll_read() {
@@ -46,11 +44,11 @@ int poll_initialize_ps2() {
         ps2_poll_command(PS2_CMD_PORT, PS2_READ_BYTE_COMMAND(0));
         ps2_cfg = ps2_poll_read();
     if (self_test_res != PS2_TEST_SUCCESS) {
-        printk("Error initializing PS/2 controller\n\r");
+        printk("Error initializing PS/2 controller\n");
         return 0;
     }
     ps2_poll_command(PS2_CMD_PORT, PS2_ENABLE_1ST_PORT);
-    printk("Successfully initialized PS/2 controller\n\r");
+    printk("Successfully initialized PS/2 controller\n");
     return 1;
 }
 
@@ -62,7 +60,7 @@ void poll_initialize_ps2_keyboard() {
         ack = ps2_poll_read();
     } while (ack == PS2_KB_RESEND);
     if (ps2_poll_read() != PS2_KB_TEST_SUCCESS)
-        printk("Error resetting/testing keyboard\n\r");
+        printk("Error resetting/testing keyboard\n");
     // Set scancode to set 2
     do {
         ps2_poll_command(PS2_DATA_PORT, PS2_KB_SCANCODE_CMD);
@@ -72,13 +70,5 @@ void poll_initialize_ps2_keyboard() {
         ps2_poll_command(PS2_DATA_PORT, PS2_KB_SET_SCANCODE2);
         ack = ps2_poll_read();
     } while (ack == PS2_KB_RESEND);
-    printk("Successfully initialized keyboard\n\r");
-}
-
-uint8_t ps2_kb_read() {
-    uint8_t status;
-    do {    // Poll for output buffer ready to read
-        status = inb(PS2_CMD_PORT);
-    } while (!PS2_OUTPUT_STATUS(status));
-    return inb(PS2_DATA_PORT);
+    printk("Successfully initialized keyboard\n");
 }

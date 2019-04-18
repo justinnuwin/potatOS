@@ -48,22 +48,8 @@
 #define PS2_KB_ENABLE_SCANNING      0xf4
 #define PS2_KB_DISABLE_SCANNING     0xf5
 
-
-/*
-struct PS2_status {
-    uint8_t output_buf_status:1;
-    uint8_t input_buf_status:1;
-    uint8_t system_flag:1;
-    uint8_t cmd_data:1;
-    uint8_t RES0:1;
-    uint8_t RES1:1;
-    uint8_t timeout_err:1;
-    uint8_t parity_err:1;
-};
-*/
-
+uint8_t ps2_poll_read();
 int poll_initialize_ps2();
 void poll_initialize_ps2_keyboard();
-uint8_t ps2_kb_read();
 
 #endif

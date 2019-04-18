@@ -25,7 +25,8 @@ void kernel_main(void) {
     wait_longer();
     clear_screen();
 
+    int i = 0;
     while (1) {
-        printk("%x\n\r", ps2_kb_read());
+        printk("%x\n", i++);
     }
 }
