@@ -44,7 +44,7 @@ int poll_initialize_ps2() {
         ps2_poll_command(PS2_CMD_PORT, PS2_READ_BYTE_COMMAND(0));
         ps2_cfg = ps2_poll_read();
     if (self_test_res != PS2_TEST_SUCCESS) {
-        printk("%s\n\r", "Error initializing PS/2 controller");
+        printk("Error initializing PS/2 controller\n\r");
         return 0;
     }
     ps2_poll_command(PS2_CMD_PORT, PS2_ENABLE_1ST_PORT);
@@ -60,21 +60,17 @@ void poll_initialize_ps2_keyboard() {
         ack = ps2_poll_read();
     } while (ack == PS2_KB_RESEND);
     if (ps2_poll_read() != PS2_KB_TEST_SUCCESS)
-        printk("%s\n\r", "Error resetting/testing keyboard");
+        printk("Error resetting/testing keyboard\n\r");
     // Set scancode to set 2
     do {
         ps2_poll_command(PS2_DATA_PORT, PS2_KB_SCANCODE_CMD);
         ack = ps2_poll_read();
     } while (ack == PS2_KB_RESEND);
-    ps2_poll_command(PS2_DATA_PORT, PS2_KB_SET_SCANCODE2);
-    printk("%x\n\r", 0x0);
-    printk("%x\n\r", 0x1);
-    printk("%x\n\r", 0x2);
-    printk("%x\n\r", ps2_poll_read());
-    ps2_poll_command(PS2_DATA_PORT, PS2_KB_GET_SCANCODE);
-    printk("%x\n\r", ps2_poll_read());
-    printk("%x\n\r", ps2_poll_read());
-    printk("%x\n\r", ps2_poll_read());
+    do {
+        ps2_poll_command(PS2_DATA_PORT, PS2_KB_SET_SCANCODE2);
+        ack = ps2_poll_read();
+    } while (ack == PS2_KB_RESEND);
+    printk("Successfully initialized keyboard\n\r");
 }
 
 uint8_t ps2_kb_read() {

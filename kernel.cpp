@@ -25,7 +25,7 @@ void kernel_main(void) {
     int i = 0;
     int _i = 0;
     while (1) {
-        // printk("%x\n\r", ps2_kb_read());
+        printk("%x\n\r", ps2_kb_read());
         i++;
         _i--;
         int j = 30;
