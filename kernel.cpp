@@ -3,6 +3,7 @@
 #include "vga.h"
 #include "printk.h"
 #include "ps2.h"
+#include "keyboard.h"
 
 void wait_a_little() {
     int i = 100000;
@@ -25,8 +26,7 @@ void kernel_main(void) {
     wait_longer();
     clear_screen();
 
-    int i = 0;
     while (1) {
-        printk("%x\n", i++);
+        display_keyboard_input();
     }
 }
