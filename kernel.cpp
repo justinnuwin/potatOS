@@ -15,12 +15,12 @@ void wait_longer() {
 }
 
 void kernel_main(void) {
-    poll_initialize_ps2();
     splash_screen();
     wait_longer();
     wait_longer();
     clear_screen();
-    poll_initialize_ps2_keyboard();
+    if (poll_initialize_ps2())
+        poll_initialize_ps2_keyboard();
 
     int i = 0;
     int _i = 0;

@@ -21,7 +21,8 @@ void ps2_poll_command(uint8_t port, uint8_t command) {
     outb(port, command);
 }
 
-void poll_initialize_ps2() {
+// Returns 1 on success, 0 on failure
+int poll_initialize_ps2() {
     // TODO: It would be a good idea to determine if PS/2 even exists
     ps2_poll_command(PS2_CMD_PORT, PS2_DISABLE_1ST_PORT);
     ps2_poll_command(PS2_CMD_PORT, PS2_DISABLE_2ND_PORT);
@@ -30,20 +31,25 @@ void poll_initialize_ps2() {
     uint8_t ps2_cfg = ps2_poll_read();
     ps2_cfg &= ~PS2_CFG_1ST_PORT_INT_BIT;   // Disable port 1 interrupts
     ps2_cfg &= ~PS2_CFG_2ND_PORT_INT_BIT;   // Disable port 2 interrupts
-    ps2_cfg |= PS2_CFG_1ST_PORT_CLOCK_BIT;  // Enable port 1 clock
+    ps2_cfg |= PS2_CFG_SYSTEM_FLAG_BIT;     // Set system flag, POSTed
+    ps2_cfg &= ~PS2_CFG_1ST_PORT_CLOCK_BIT; // Enable port 1 clock
+    ps2_cfg |= PS2_CFG_2ND_PORT_CLOCK_BIT;  // Disable port 2 clock
     ps2_cfg &= ~PS2_CFG_1ST_PORT_XLATE_BIT; // Disable translation
     // Poll write config to RAM byte 0
-    ps2_poll_command(PS2_DATA_PORT, PS2_WRITE_BYTE_COMMAND(0));
+    ps2_poll_command(PS2_CMD_PORT, PS2_WRITE_BYTE_COMMAND(0));
     ps2_poll_command(PS2_DATA_PORT, ps2_cfg);
-    /*
     // Test PS/2 controller
     ps2_poll_command(PS2_CMD_PORT, PS2_TEST_CONTROLLER);
     uint8_t self_test_res = ps2_poll_read();
-    if (self_test_res == PS2_TEST_SUCCESS)
-        printk("%s\n\r", "Successfully initialized PS/2 controller");
-    else
+        ps2_poll_command(PS2_CMD_PORT, PS2_READ_BYTE_COMMAND(0));
+        ps2_cfg = ps2_poll_read();
+    if (self_test_res != PS2_TEST_SUCCESS) {
         printk("%s\n\r", "Error initializing PS/2 controller");
-        */
+        return 0;
+    }
+    ps2_poll_command(PS2_CMD_PORT, PS2_ENABLE_1ST_PORT);
+    printk("Successfully initialized PS/2 controller\n\r");
+    return 1;
 }
 
 void poll_initialize_ps2_keyboard() {

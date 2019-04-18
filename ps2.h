@@ -29,6 +29,7 @@
 #define PS2_CFG_ZERO2(x)                ((x & 0x80) >> 7)
 #define PS2_CFG_1ST_PORT_INT_BIT    0x1
 #define PS2_CFG_2ND_PORT_INT_BIT    0x2
+#define PS2_CFG_SYSTEM_FLAG_BIT     0x4
 #define PS2_CFG_1ST_PORT_CLOCK_BIT  0x10
 #define PS2_CFG_2ND_PORT_CLOCK_BIT  0x20
 #define PS2_CFG_1ST_PORT_XLATE_BIT  0x40
@@ -61,7 +62,7 @@ struct PS2_status {
 };
 */
 
-void poll_initialize_ps2();
+int poll_initialize_ps2();
 void poll_initialize_ps2_keyboard();
 uint8_t ps2_kb_read();
 
