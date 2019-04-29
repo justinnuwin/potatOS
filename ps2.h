@@ -49,7 +49,7 @@
 #define PS2_KB_DISABLE_SCANNING     0xf5
 
 uint8_t ps2_poll_read();
-int poll_initialize_ps2();
-void poll_initialize_ps2_keyboard();
+int poll_init_ps2();
+void poll_init_ps2_keyboard();
 
 #endif

@@ -20,7 +20,7 @@ void ps2_poll_command(uint8_t port, uint8_t command) {
 }
 
 // Returns 1 on success, 0 on failure
-int poll_initialize_ps2() {
+int poll_init_ps2() {
     // TODO: It would be a good idea to determine if PS/2 even exists
     ps2_poll_command(PS2_CMD_PORT, PS2_DISABLE_1ST_PORT);
     ps2_poll_command(PS2_CMD_PORT, PS2_DISABLE_2ND_PORT);
@@ -52,7 +52,7 @@ int poll_initialize_ps2() {
     return 1;
 }
 
-void poll_initialize_ps2_keyboard() {
+void poll_init_ps2_keyboard() {
     uint8_t ack;
     // Reset/test keyboard
     do {
