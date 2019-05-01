@@ -67,38 +67,40 @@ void init_keyboard() {
 }
 
 char parse_keyboard_scancode(uint8_t scancode) {
-    char value;
+}
+
+void keyboard_interrupt_handler(void) {
+    uint8_t scancode = inb(PS2_DATA_PORT);
+    unsigned char value;
     switch (scancode) {
         case 0x12:  // Left Shift
             Keyboard::keyboard.shift = !Keyboard::keyboard.shift;
+            value = 0;
             break;
         case 0x58:  // Caps Lock
             Keyboard::keyboard.caps = !Keyboard::keyboard.caps;
+            value = 0;
             break;
         case 0x59:  // Right Shift
             Keyboard::keyboard.shift = !Keyboard::keyboard.shift;
+            value = 0;
             break;
         case 0xf0:  // Release
             Keyboard::keyboard.release = true;
-            return scancode;
+            value = 0;
+            break;
         default:
             value = scancode2[scancode];
             break;
     };
-    if ((Keyboard::keyboard.shift || Keyboard::keyboard.caps) && value >= 'a' && value <= 'z')
-        value -= ('a' - 'A');
-    return value;
-}
-
-void keyboard_interrupt_handler(void) {
-    char input = parse_keyboard_scancode(inb(PS2_DATA_PORT));
-    if (input == 0xf0)
-        int i = 1;
-
-    if (Keyboard::keyboard.release) {
+    if (!value) {
+        return;
+    } else if (Keyboard::keyboard.release) {
         Keyboard::keyboard.release = false;
-    } else {
-        if (input != 0xf0)
-            printk("%c", input);
+    } else  {
+        if ((Keyboard::keyboard.shift || Keyboard::keyboard.caps) && value >= 'a' && value <= 'z')
+            value -= ('a' - 'A');
+        printk("%c", value);
     }
+    return;
 }
