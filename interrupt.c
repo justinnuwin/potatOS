@@ -28,10 +28,14 @@
 
 extern "C" void isr_wrapper(void);
 
-void PIC_sendROI(unsigned char irq) {
+// Global initialization of interrupt descriptor table
+struct interrupt_descriptor IDT[256];
+
+void PIC_sendEOI(unsigned char irq) {
     if (irq >= 8)
         outb(PIC2_COMMAND, PIC_EOI);
     outb(PIC1_COMMAND, PIC_EOI);
+    return;
 }
 
 /*
@@ -47,23 +51,20 @@ void PIC_remap(int offset1, int offset2) {
 	a2 = inb(PIC2_DATA);
  
 	outb(PIC1_COMMAND, ICW1_INIT | ICW1_ICW4);  // starts the initialization sequence (in cascade mode)
-	//io_wait();
+	io_wait();
 	outb(PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
-	//io_wait();
+	io_wait();
 	outb(PIC1_DATA, offset1);                 // ICW2: Master PIC vector offset
-	//io_wait();
+	io_wait();
 	outb(PIC2_DATA, offset2);                 // ICW2: Slave PIC vector offset
-	//io_wait();
+	io_wait();
 	outb(PIC1_DATA, 4);                       // ICW3: tell Master PIC that there is a slave PIC at IRQ2 (0000 0100)
-
 	outb(PIC2_DATA, 2);                       // ICW3: tell Slave PIC its cascade identity (0000 0010)
-	//io_wait();
- 
+	io_wait();
 	outb(PIC1_DATA, ICW4_8086);
-	//io_wait();
+	io_wait();
 	outb(PIC2_DATA, ICW4_8086);
-	//io_wait();
- 
+	io_wait();
 	outb(PIC1_DATA, a1);   // restore saved masks.
 	outb(PIC2_DATA, a2);
 }
@@ -72,7 +73,7 @@ void IRQ_set_mask(unsigned char IRQline) {
     uint16_t port;
     uint8_t value;
 
-    if(IRQline < 8) {
+    if (IRQline < 8) {
         port = PIC1_DATA;
     } else {
         port = PIC2_DATA;
@@ -86,7 +87,7 @@ void IRQ_clear_mask(unsigned char IRQline) {
     uint16_t port;
     uint8_t value;
 
-    if(IRQline < 8) {
+    if (IRQline < 8) {
         port = PIC1_DATA;
     } else {
         port = PIC2_DATA;
@@ -96,7 +97,17 @@ void IRQ_clear_mask(unsigned char IRQline) {
     outb(port, value);
 }
 
-void init_interrupts() {
+void register_isr(void (*isr_entry_pt)(void), uint8_t int_num) {
+    uint64_t isr_addr_0_15 = ((uint64_t)isr_entry_pt & 0xffff);
+    uint64_t isr_addr_16_31 = ((uint64_t)isr_entry_pt >> 16) & 0xffff;
+    uint64_t isr_addr_32_64 = ((uint64_t)isr_entry_pt >> 32) & 0xffffffff;
+
+    IDT[int_num].offset_0_15 = isr_addr_0_15;
+    IDT[int_num].offset_16_31 = isr_addr_16_31;
+    IDT[int_num].offset_32_64 = isr_addr_32_64;
+}
+
+bool init_interrupts() {
     PIC_remap(0x20, 0x28);
     for (int i = 0; i < 8; i++)
         IRQ_set_mask(i);
@@ -105,16 +116,16 @@ void init_interrupts() {
     uint64_t isr_addr_16_31 = ((uint64_t)isr_wrapper >> 16) & 0xffff;
     uint64_t isr_addr_32_64 = ((uint64_t)isr_wrapper >> 32) & 0xffffffff;
     for (int i = 0; i < 256; i++) {
-        idt[i].offset_0_15 = isr_addr_0_15;
-        idt[i].offset_16_31 = isr_addr_16_31;
-        idt[i].offset_32_64 = isr_addr_32_64;
-        idt[i].selector = 0x8;  // TODO: why???
-        idt[i].int_stack_table_idx = 0;     // 0: Don't switch stacks
-        idt[i].type = IST_INT_GATE;
-        idt[i].protection_level = 0;
-        idt[i].present = 1;
+        IDT[i].offset_0_15 = isr_addr_0_15;
+        IDT[i].offset_16_31 = isr_addr_16_31;
+        IDT[i].offset_32_64 = isr_addr_32_64;
+        IDT[i].selector = 0x8;  // TODO: why???
+        IDT[i].int_stack_table_idx = 0;     // 0: Don't switch stacks
+        IDT[i].type = IST_INT_GATE;
+        IDT[i].protection_level = 3;
+        IDT[i].present = 1;
     }
-
-    lidt(&idt, (uint16_t)sizeof(idt) - 1);
+    lidt(&IDT, (uint16_t)sizeof(IDT) - 1);
+    return are_interrupts_enabled();
 }
 

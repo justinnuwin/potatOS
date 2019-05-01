@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
@@ -17,8 +18,18 @@ struct interrupt_descriptor {
     uint32_t reserved1;
 } __attribute__ ((packed));
 
-// Global initialization of interrupt descriptor table
-static struct interrupt_descriptor idt[256];
+extern "C" void PIC_sendEOI(unsigned char irq);
+void IRQ_set_mask(unsigned char IRQline);
+void IRQ_clear_mask(unsigned char IRQline);
+void register_isr(void (*isr_entry_pt)(void), uint8_t int_num);
+bool init_interrupts();
 
-void init_interrupts();
+inline void sti() {
+    asm volatile ("sti" : : );
+}
+
+inline void cli() {
+    asm volatile ("cli" : : );
+}
+
 #endif
