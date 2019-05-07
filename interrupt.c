@@ -2,6 +2,7 @@
 
 #include "asm_functions.h"
 #include "printk.h"
+#include "generic_isr.h"
 
 #define PIC1            0x20    // IO base address for master PIC
 #define PIC2            0xa0    // IO base address for slave PIC
@@ -112,20 +113,14 @@ bool init_interrupts() {
     for (int i = 0; i < 8; i++)
         IRQ_set_mask(i);
 
-    uint64_t isr_addr_0_15 = ((uint64_t)isr_wrapper & 0xffff);
-    uint64_t isr_addr_16_31 = ((uint64_t)isr_wrapper >> 16) & 0xffff;
-    uint64_t isr_addr_32_64 = ((uint64_t)isr_wrapper >> 32) & 0xffffffff;
     for (int i = 0; i < 256; i++) {
-        IDT[i].offset_0_15 = isr_addr_0_15;
-        IDT[i].offset_16_31 = isr_addr_16_31;
-        IDT[i].offset_32_64 = isr_addr_32_64;
         IDT[i].selector = 0x8;  // TODO: why???
         IDT[i].int_stack_table_idx = 0;     // 0: Don't switch stacks
         IDT[i].type = IST_INT_GATE;
         IDT[i].protection_level = 3;
         IDT[i].present = 1;
     }
+    load_generic_isr();
     lidt(&IDT, (uint16_t)sizeof(IDT) - 1);
     return are_interrupts_enabled();
 }
-

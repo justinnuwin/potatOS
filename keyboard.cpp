@@ -31,7 +31,6 @@ class Keyboard {
     volatile bool caps;
     volatile bool release;
 
-    friend char parse_keyboard_scancode(uint8_t scancode);
     friend void keyboard_interrupt_handler(void);
 };
 
@@ -64,9 +63,6 @@ void init_keyboard() {
     register_isr(keyboard_isr_wrapper, 0x21);
     IRQ_clear_mask(1);
     printk("Successfully initialized keyboard\n");
-}
-
-char parse_keyboard_scancode(uint8_t scancode) {
 }
 
 void keyboard_interrupt_handler(void) {
