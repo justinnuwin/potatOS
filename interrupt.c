@@ -30,7 +30,20 @@
 extern "C" void isr_wrapper(void);
 
 // Global initialization of interrupt descriptor table
-struct interrupt_descriptor IDT[256];
+static struct interrupt_descriptor IDT[256];
+
+struct interrupt_descriptor_table {
+    uint16_t length;
+    void *base;
+} __attribute__ ((packed));
+
+static struct interrupt_descriptor_table IDTR;
+
+void lidt(void *base, uint16_t size) {
+    IDTR = {size, base};
+
+    asm volatile ("lidt %0" : : "m"(IDTR));
+}
 
 void PIC_sendEOI(unsigned char irq) {
     if (irq >= 8)

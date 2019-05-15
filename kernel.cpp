@@ -5,6 +5,7 @@
 #include "ps2.h"
 #include "keyboard.h"
 #include "interrupt.h"
+#include "gdt.h"
 
 void wait_a_little() {
     int i = 100000;
@@ -30,6 +31,7 @@ void kernel_main(void) {
     clear_screen();
 
     sti();
+    setup_tss();
     while (1) {
     }
 }
