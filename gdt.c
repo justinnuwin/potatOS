@@ -64,13 +64,13 @@ struct tss {
     uint64_t rsp1;
     uint64_t rsp2;
     uint64_t reserved1;
-    void *ist1;
-    void *ist2;
-    void *ist3;
-    void *ist4;
-    void *ist5;
-    void *ist6;
-    void *ist7;
+    void **ist1;
+    void **ist2;
+    void **ist3;
+    void **ist4;
+    void **ist5;
+    void **ist6;
+    void **ist7;
     uint64_t reserved2;
     uint16_t reserved3;
     uint16_t io_map_base_addr;
@@ -107,13 +107,14 @@ void copy_bootstrap_gdt(struct gdt *gdt) {
 
 struct tss *setup_tss() {
     static struct tss tss;
-    tss.ist1 = stack_top1;
-    tss.ist2 = stack_top2;
-    tss.ist3 = stack_top3;
-    tss.ist4 = stack_top4;
-    tss.ist5 = stack_top5;
-    tss.ist6 = stack_top6;
-    tss.ist7 = stack_top7;
+    memset(&tss, 0, sizeof(tss));
+    tss.ist1 = &stack_top1;
+    tss.ist2 = &stack_top2;
+    tss.ist3 = &stack_top3;
+    tss.ist4 = &stack_top4;
+    tss.ist5 = &stack_top5;
+    tss.ist6 = &stack_top6;
+    tss.ist7 = &stack_top7;
     tss.io_map_base_addr = sizeof(tss);
     return &tss;
 }
@@ -124,7 +125,7 @@ void setup_gdt_tss() {
     struct tss *tss = setup_tss();
     uint16_t tss_limit = sizeof(*tss);
     gdt.tss.limit_0_15 = tss_limit & 0xffffffff;
-    gdt.tss.limit_16_19 = (uint8_t) ((tss_limit >> 16) & 0xffff);
+    gdt.tss.limit_16_19 = (uint8_t)((tss_limit >> 16) & 0xffff);
     gdt.tss.base_0_15 =   (uint16_t) ((uint64_t)tss & 0xffffffff);
     gdt.tss.base_16_23 =  (uint8_t)  ((((uint64_t)tss) >> 16) & 0xffffffff);
     gdt.tss.base_24_31 =  (uint8_t)  ((((uint64_t)tss) >> 24) & 0xffffffff);

@@ -32,6 +32,11 @@ void kernel_main(void) {
 
     setup_gdt_tss();
     sti();
+//    asm ("int $0xd");
+    uintptr_t i = 1;
+    i = ~i;
+    *(int *)i = 10;
+    printk("Success!\n");
     while (1) {
     }
 }

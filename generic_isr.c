@@ -44,13 +44,15 @@ void generic_exception_handler(unsigned number, unsigned code) {
             printk("#TS Unhandled exception %x: Invalid TSS Fault: code %u\n", number, code);
             break;
         case 0xb:
-            printk("#NP Unhandled exception %x: Segment not present fault: code %u\n", number, code);
+            printk("#NP Unhandled fatal exception %x: Segment not present fault: code %u\n", number, code);
+            halt();
             break;
         case 0xc:
             printk("#SS Unhandled exception %x: Stack segment fault: code %u\n", number, code);
             break;
         case 0xd:
             printk("#GP Unhandled exception %x: General protection fault: code %u\n", number, code);
+            halt();
             break;
         case 0xe:
             printk("#PF Unhandled exception %x: Page fault: code %u\n", number, code);

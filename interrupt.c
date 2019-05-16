@@ -127,12 +127,15 @@ bool init_interrupts() {
         IRQ_set_mask(i);
 
     for (int i = 0; i < 256; i++) {
-        IDT[i].selector = 0x8;  // TODO: why???
-        IDT[i].int_stack_table_idx = 0;     // 0: Don't switch stacks
+        IDT[i].selector = 0x8;
+        IDT[i].ist = 0;                 // 0: Don't switch stacks
         IDT[i].type = IST_INT_GATE;
-        IDT[i].protection_level = 3;
+        IDT[i].protection_level = 0;
         IDT[i].present = 1;
     }
+    IDT[0x8].ist = 1;       // #DF Use stack 1
+    IDT[0xd].ist = 1;       // #GP Use stack 1
+    IDT[0xe].ist = 1;       // #PF Use stack 1
     load_generic_isr();
     lidt(&IDT, (uint16_t)sizeof(IDT) - 1);
     return are_interrupts_enabled();

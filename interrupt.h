@@ -7,7 +7,7 @@
 struct interrupt_descriptor {
     uint16_t offset_0_15;
     uint16_t selector;
-    uint8_t int_stack_table_idx:2;
+    uint8_t ist:2;
     uint8_t reserved0:6;
     uint8_t type:4;
     uint8_t zero:1;
