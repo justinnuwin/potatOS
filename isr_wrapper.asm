@@ -1,14 +1,11 @@
 global keyboard_isr_wrapper
 extern generic_interrupt_handler
+extern generic_exception_handler
 extern keyboard_interrupt_handler
 extern PIC_sendEOI
 align  4
 
-
-section .text
-bits 64
-
-keyboard_isr_wrapper:
+%macro setup_isr 0
     push rbp    ; Start new stack frame
     mov  rbp, rsp
     
@@ -17,10 +14,9 @@ keyboard_isr_wrapper:
     push r13
     push r14
     push r15
+%endmacro
 
-    cld         ; C code following sysV ABI requires DF be cleared on call
-    call keyboard_interrupt_handler
-
+%macro cleanup_isr 0
     pop r15
     pop r14
     pop r13
@@ -29,6 +25,16 @@ keyboard_isr_wrapper:
 
     mov rsp, rbp    ; Remove stack frame
     pop rbp
+%endmacro
+
+section .text
+bits 64
+
+keyboard_isr_wrapper:
+    setup_isr
+    cld         ; C code following sysV ABI requires DF be cleared on call
+    call keyboard_interrupt_handler
+    cleanup_isr
     mov rdi, 0x21
     call PIC_sendEOI
     iretq
@@ -36,6 +42,34 @@ keyboard_isr_wrapper:
 ;
 ; Declare generic interrupt handlers
 ;
+
+%macro exception_no_err 1
+    global isr_wrapper_%1
+    isr_wrapper_%1:
+        setup_isr
+        cld         ; C code following sysV ABI requires DF be cleared on call
+        mov rdi, %1
+        mov rsi, 0
+        call generic_exception_handler
+        cleanup_isr
+        mov rdi, %1
+        call PIC_sendEOI
+        iretq
+%endmacro
+
+%macro exception_err 1
+    global isr_wrapper_%1
+    isr_wrapper_%1:
+        setup_isr
+        cld         ; C code following sysV ABI requires DF be cleared on call
+        mov rdi, %1
+        pop rsi
+        call generic_exception_handler
+        cleanup_isr
+        mov rdi, %1
+        call PIC_sendEOI
+        iretq
+%endmacro
 
 ; Follow SystemV ABI calling convention
 %macro isr 1
@@ -67,39 +101,38 @@ keyboard_isr_wrapper:
         iretq
 %endmacro
 
-isr 0x0
-isr 0x1
-isr 0x2
-isr 0x3
-isr 0x4
-isr 0x5
-isr 0x6
-isr 0x7
-isr 0x8
-isr 0x9
-isr 0xa
-isr 0xb
-isr 0xc
-isr 0xd
-isr 0xe
-isr 0xf
-
-isr 0x10
-isr 0x11
-isr 0x12
-isr 0x13
-isr 0x14
-isr 0x15
-isr 0x16
-isr 0x17
-isr 0x18
-isr 0x19
-isr 0x1a
-isr 0x1b
-isr 0x1c
-isr 0x1d
-isr 0x1e
-isr 0x1f
+exception_no_err 0x0
+exception_no_err 0x1
+exception_no_err 0x2
+exception_no_err 0x3
+exception_no_err 0x4
+exception_no_err 0x5
+exception_no_err 0x6
+exception_no_err 0x7
+exception_no_err 0x8
+exception_no_err 0x9
+exception_err 0xa
+exception_err 0xb
+exception_err 0xc
+exception_err 0xd
+exception_err 0xe
+exception_no_err 0xf
+exception_no_err 0x10
+exception_err 0x11
+exception_no_err 0x12
+exception_no_err 0x13
+exception_no_err 0x14
+exception_no_err 0x15
+exception_no_err 0x16
+exception_no_err 0x17
+exception_no_err 0x18
+exception_no_err 0x19
+exception_no_err 0x1a
+exception_no_err 0x1b
+exception_no_err 0x1c
+exception_no_err 0x1d
+exception_err 0x1e
+exception_no_err 0x1f
 
 isr 0x20
 isr 0x21

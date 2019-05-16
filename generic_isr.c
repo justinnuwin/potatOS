@@ -3,6 +3,84 @@
 #include "interrupt.h"
 #include "printk.h"
 
+void halt(void) {
+    asm volatile ("hlt"::);
+}
+
+void generic_exception_handler(unsigned number, unsigned code) {
+    switch (number) {
+        case 0x0:
+            printk("#DE Unhandled exception %x: Divide by zero error fault\n", number);
+            break;
+        case 0x1:
+            printk("#DB Unhandled exception %x: Debug fault\n", number);
+            break;
+        case 0x2:
+            printk("Unhandled non-maskable interrupt %x\n", number);
+            break;
+        case 0x3:
+            printk("#BP Unhandled exception %x: Breakpoint fault\n", number);
+            break;
+        case 0x4:
+            printk("#DB Unhandled exception %x: Debug fault\n", number);
+            break;
+        case 0x5:
+            printk("#BR Unhandled exception %x: Bound Range Exceeded fault\n", number);
+            break;
+        case 0x6:
+            printk("#UD Unhandled exception %x: Invalid Opcode fault\n", number);
+            break;
+        case 0x7:
+            printk("#NM Unhandled exception %x: Device not available fault\n", number);
+            break;
+        case 0x8:
+            printk("#DF Unhandled fatal exception %x: Double fault\n", number);
+            halt();
+            break;
+        case 0x9:
+            printk("#Unhandled exception %x: Coprocessor segment overrun fault\n", number);
+            break;
+        case 0xa:
+            printk("#TS Unhandled exception %x: Invalid TSS Fault: code %u\n", number, code);
+            break;
+        case 0xb:
+            printk("#NP Unhandled exception %x: Segment not present fault: code %u\n", number, code);
+            break;
+        case 0xc:
+            printk("#SS Unhandled exception %x: Stack segment fault: code %u\n", number, code);
+            break;
+        case 0xd:
+            printk("#GP Unhandled exception %x: General protection fault: code %u\n", number, code);
+            break;
+        case 0xe:
+            printk("#PF Unhandled exception %x: Page fault: code %u\n", number, code);
+            break;
+        case 0x10:
+            printk("#MF Unhandled exception %x: x87 Floating-Point fault\n", number);
+            break;
+        case 0x11:
+            printk("#AC Unhandled exception %x: Alignment check fault: code %u\n", number, code);
+            break;
+        case 0x12:
+            printk("#MC Unhandled fatal exception %x: Machine check fault\n", number);
+            halt();
+            break;
+        case 0x13:
+            printk("#XM Unhandled exception %x: SIMD Floating-Point fault\n", number);
+            break;
+        case 0x14:
+            printk("#VE Unhandled exception %x: Virtualization fault\n", number);
+            break;
+        case 0x1e:
+            printk("#SX Unhandled exception %x: Security fault: code %u\n", number, code);
+            break;
+        default:
+            printk("Unhandled exception %x\n", number);
+            break;
+    }
+    return;
+}
+
 void generic_interrupt_handler(unsigned number) {
     printk("Unhandled interrupt %x (%u)\n", number, number);
     return;
