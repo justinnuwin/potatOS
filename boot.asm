@@ -1,5 +1,12 @@
 global start
 global gdt64.descriptor
+global stack_top1
+global stack_top2
+global stack_top3
+global stack_top4
+global stack_top5
+global stack_top6
+global stack_top7
 extern long_mode_start
 
 section .rodata
@@ -22,14 +29,32 @@ p2_table:       ; Page-Directory Table (PD)
     resb 4096
 p1_table:       ; Page Table (PT)
     resb 4096
-stack_bottom:
+stack_bottom1:
     resb 4096
-stack_top:
+stack_top1:
+stack_bottom2:
+    resb 4096
+stack_top2:
+stack_bottom3:
+    resb 4096
+stack_top3:
+stack_bottom4:
+    resb 4096
+stack_top4:
+stack_bottom5:
+    resb 4096
+stack_top5:
+stack_bottom6:
+    resb 4096
+stack_top6:
+stack_bottom7:
+    resb 4096
+stack_top7:
 
 section .text
 bits 32
 start:
-    mov esp, stack_top
+    mov esp, stack_top1
 
     ; Checks and paging are written using code from
     ; https://os.phil-opp.com/entering-longmode/

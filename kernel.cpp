@@ -30,8 +30,8 @@ void kernel_main(void) {
     wait_longer();
     clear_screen();
 
+    setup_gdt_tss();
     sti();
-    setup_tss();
     while (1) {
     }
 }
