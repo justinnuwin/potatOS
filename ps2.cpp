@@ -1,5 +1,6 @@
 #include "ps2.h"
 
+#include "asm_functions.h"
 #include "printk.h"
 
 inline void ps2_poll_command(uint8_t port, uint8_t command) {
