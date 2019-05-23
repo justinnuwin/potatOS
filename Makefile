@@ -68,7 +68,7 @@ generic_isr.o: generic_isr.c generic_isr.h
 gdt.o: gdt.c gdt.h
 	$(CC) -o $@ $(CFLAGS) $<
 
-serial.o: serial.c serial.h
+serial.o: serial.cpp serial.h
 	$(CC) -o $@ $(CFLAGS) $<
 
 .PHONY: clean
