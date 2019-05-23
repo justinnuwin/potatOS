@@ -52,7 +52,7 @@ void generic_exception_handler(unsigned number, unsigned code) {
             break;
         case 0xd:
             printk("#GP Unhandled exception %x: General protection fault: code %u\n", number, code);
-            halt();
+            while (1);
             break;
         case 0xe:
             printk("#PF Unhandled exception %x: Page fault: code %u\n", number, code);
