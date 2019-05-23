@@ -1,10 +1,60 @@
 global start
+global gdt64.descriptor
+global stack_top1
+global stack_top2
+global stack_top3
+global stack_top4
+global stack_top5
+global stack_top6
+global stack_top7
 extern long_mode_start
+
+section .rodata
+gdt64:
+    dq 0 ; zero entry
+.code: equ $ - gdt64 ; new
+    ; Executable | Type | Present | 64-bit Code Segment
+    dq (1<<43) | (1<<44) | (1<<47) | (1<<53) ; code segment
+.descriptor:
+    dw $ - gdt64 - 1
+    dq gdt64
+
+section .bss
+align 4096
+p4_table:       ; Page-Map Level-4 Table (PML4)
+    resb 4096
+p3_table:       ; Page-Directory Pointer Table (PDP)
+    resb 4096
+p2_table:       ; Page-Directory Table (PD)
+    resb 4096
+p1_table:       ; Page Table (PT)
+    resb 4096
+stack_bottom1:
+    resb 4096
+stack_top1:
+stack_bottom2:
+    resb 4096
+stack_top2:
+stack_bottom3:
+    resb 4096
+stack_top3:
+stack_bottom4:
+    resb 4096
+stack_top4:
+stack_bottom5:
+    resb 4096
+stack_top5:
+stack_bottom6:
+    resb 4096
+stack_top6:
+stack_bottom7:
+    resb 4096
+stack_top7:
 
 section .text
 bits 32
 start:
-    mov esp, stack_top
+    mov esp, stack_top1
 
     ; Checks and paging are written using code from
     ; https://os.phil-opp.com/entering-longmode/
@@ -18,7 +68,7 @@ start:
     ; print `OK` to screen
     mov dword [0xb8000], 0x2f4b2f4f
     
-    lgdt [gdt64.pointer] ; load the 64-bit GDT 
+    lgdt [gdt64.descriptor] ; load the 64-bit GDT 
     jmp gdt64.code:long_mode_start
     
     hlt
@@ -138,26 +188,3 @@ error:
     mov dword [0xb8008], 0x4f204f20
     mov byte  [0xb800a], al
     hlt
-
-section .bss
-align 4096
-p4_table:       ; Page-Map Level-4 Table (PML4)
-    resb 4096
-p3_table:       ; Page-Directory Pointer Table (PDP)
-    resb 4096
-p2_table:       ; Page-Directory Table (PD)
-    resb 4096
-p1_table:       ; Page Table (PT)
-    resb 4096
-stack_bottom:
-    resb 64
-stack_top:
-
-section .rodata
-gdt64:
-    dq 0 ; zero entry
-.code: equ $ - gdt64 ; new
-    dq (1<<43) | (1<<44) | (1<<47) | (1<<53) ; code segment
-.pointer:
-    dw $ - gdt64 - 1
-    dq gdt64

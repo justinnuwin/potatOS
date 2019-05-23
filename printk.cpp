@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "vga.h"
 #include "string.h"
+#include "interrupt.h"
 
 int atoi_display(unsigned long long abs_val) {
     int written = 0;
@@ -78,6 +79,7 @@ int print_hex(unsigned value) {
 
 // Printk will interpret \n as \n\r
 int printk(const char *fmt, ...) {
+    cli();
     int written = 0;
     va_list vl;
     va_start(vl, fmt);
@@ -137,5 +139,6 @@ int printk(const char *fmt, ...) {
         fmt++;
     }
     va_end(vl);
+    sti();
     return written;
 }

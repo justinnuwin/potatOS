@@ -2,11 +2,12 @@
 
 #include <stdbool.h>
 #include "ps2.h"
-
-
+#include "interrupt.h"
 #include "printk.h"
 
 #define KEYBOARD_BUFFER_SIZE 1024
+
+extern "C" void keyboard_isr_wrapper(void);
 
 // Fn keys mapped from 201 - 212
 const char scancode2[0x84] = {
@@ -26,10 +27,11 @@ class Keyboard {
     static Keyboard keyboard;
 
     Keyboard();
-    bool shift;
-    bool caps;
+    volatile bool shift;
+    volatile bool caps;
+    volatile bool release;
 
-    friend char keyboard_read_input();
+    friend void keyboard_interrupt_handler(void);
 };
 
 Keyboard Keyboard::keyboard;
@@ -37,52 +39,64 @@ Keyboard Keyboard::keyboard;
 Keyboard::Keyboard() {
     shift = false;
     caps = false;
+    release = false;
 };
 
-char keyboard_read_input() {
-    uint8_t scancode = ps2_poll_read();
-    char value;
+void init_keyboard() {
+    uint8_t ack;
+    // Reset/test keyboard
+    do {
+        ps2_poll_command(PS2_DATA_PORT, PS2_KB_RESET_TEST_CMD);
+        ack = ps2_poll_read();
+    } while (ack == PS2_KB_RESEND);
+    if (ps2_poll_read() != PS2_KB_TEST_SUCCESS)
+        printk("Error resetting/testing keyboard\n");
+    // Set scancode to set 2
+    do {
+        ps2_poll_command(PS2_DATA_PORT, PS2_KB_SCANCODE_CMD);
+        ack = ps2_poll_read();
+    } while (ack == PS2_KB_RESEND);
+    do {
+        ps2_poll_command(PS2_DATA_PORT, PS2_KB_SET_SCANCODE2);
+        ack = ps2_poll_read();
+    } while (ack == PS2_KB_RESEND);
+    register_isr(keyboard_isr_wrapper, 0x21);
+    IRQ_clear_mask(1);
+    printk("Successfully initialized keyboard\n");
+}
+
+void keyboard_interrupt_handler(void) {
+    uint8_t scancode = inb(PS2_DATA_PORT);
+    unsigned char value;
     switch (scancode) {
         case 0x12:  // Left Shift
-            Keyboard::keyboard.shift = true;
+            Keyboard::keyboard.shift = !Keyboard::keyboard.shift;
+            value = 0;
             break;
         case 0x58:  // Caps Lock
-            Keyboard::keyboard.caps = true;
+            Keyboard::keyboard.caps = !Keyboard::keyboard.caps;
+            value = 0;
             break;
         case 0x59:  // Right Shift
-            Keyboard::keyboard.shift = true;
+            Keyboard::keyboard.shift = !Keyboard::keyboard.shift;
+            value = 0;
             break;
-        case 0xF0:  // Release
-            switch (ps2_poll_read()) {
-                case 0x12:  // Left Shift
-                    Keyboard::keyboard.shift = false;
-                    break;
-                case 0x58:  // Caps Lock
-                    Keyboard::keyboard.caps = false;
-                    break;
-                case 0x59:  // Right Shift
-                    Keyboard::keyboard.shift = false;
-                    break;
-                default:
-                    scancode = 0;
-                    value = 0;
-                    break;
-            };
+        case 0xf0:  // Release
+            Keyboard::keyboard.release = true;
+            value = 0;
             break;
         default:
             value = scancode2[scancode];
             break;
     };
-    if ((Keyboard::keyboard.shift || Keyboard::keyboard.caps) && value >= 'a' && value <= 'z')
-        value -= ('a' - 'A');
-    return value;
+    if (!value) {
+        return;
+    } else if (Keyboard::keyboard.release) {
+        Keyboard::keyboard.release = false;
+    } else  {
+        if ((Keyboard::keyboard.shift || Keyboard::keyboard.caps) && value >= 'a' && value <= 'z')
+            value -= ('a' - 'A');
+        printk("%c", value);
+    }
+    return;
 }
-
-void display_keyboard_input() {
-    char input = keyboard_read_input();
-    if (input == '\n')
-        printk("\n");
-    else if (input)
-        printk("%c", input);
-}
-        
