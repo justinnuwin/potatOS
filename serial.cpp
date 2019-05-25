@@ -93,6 +93,7 @@ void Serial::_write_serial(char a) {
 }
 
 void Serial::write_serial(char a) {
+    // TODO: This may need protection from race conditions
     _write_serial(a);
     write_buffer();
 }
