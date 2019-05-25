@@ -7,6 +7,7 @@
 #include "vga.h"
 #include "string.h"
 #include "interrupt.h"
+#include "serial.h"
 
 int atoi_display(unsigned long long abs_val) {
     int written = 0;
@@ -19,6 +20,7 @@ int atoi_display(unsigned long long abs_val) {
         if (first_digit) {
             VGA::vga.display_char((char)digit + '0'); 
             VGA::vga.increment_cursor();
+            COM1.write_serial((char)digit + '0');
             written++;
         }
         abs_val -= digit * shifter;
@@ -32,6 +34,7 @@ int print_decimal(int value) {
     if (value < 0) {
         VGA::vga.display_char('-');
         VGA::vga.increment_cursor();
+        COM1.write_serial('-');
         value *= -1;
         written++;
     }
@@ -56,10 +59,13 @@ int atoi_base16_display(uint64_t value, char a) {
         if (!first_char && (index == 0 || nibble > 0))
             first_char = true;
         if (first_char) {
-            if (nibble > 9)
+            if (nibble > 9) {
                 VGA::vga.display_char(nibble - 10 + a);
-            else
+                COM1.write_serial(nibble - 10 + a);
+            } else {
                 VGA::vga.display_char(nibble + '0');
+                COM1.write_serial(nibble + '0');
+            }
             VGA::vga.increment_cursor();
             written++;
         }
@@ -79,17 +85,16 @@ int print_hex(unsigned value) {
 
 // Printk will interpret \n as \n\r
 int printk(const char *fmt, ...) {
-    cli();
     int written = 0;
     va_list vl;
     va_start(vl, fmt);
     while (*fmt) {
         if (*fmt == '%') {
-            const char *str;
             switch (*(fmt + 1)) {
                 case '%':
                     VGA::vga.display_char('%');
                     VGA::vga.increment_cursor();
+                    COM1.write_serial('%');
                     written++;
                     break;
                 case 'd':
@@ -102,10 +107,21 @@ int printk(const char *fmt, ...) {
                     written += print_hex(va_arg(vl, unsigned));
                     break;
                 case 'c':
-                    VGA::vga.display_char((char)va_arg(vl, int));   // variadic upconverts to int
-                    VGA::vga.increment_cursor();
-                    written++;
-                    break;
+                    {
+                        char a = (char)va_arg(vl, int);
+                        if (a == '\n') {
+                            VGA::vga.display_char('\n');
+                            VGA::vga.display_char('\r');
+                            COM1.write_serial('\n');
+                        } else if (a == '\r') {
+                        } else {
+                            VGA::vga.display_char(a);   // variadic upconverts to int
+                            VGA::vga.increment_cursor();
+                            COM1.write_serial(a);
+                            written++;
+                        }
+                        break;
+                    }
                 case 'p':
                     written += print_hex((uint64_t)va_arg(vl, void *));
                     break;
@@ -116,10 +132,13 @@ int printk(const char *fmt, ...) {
                 case 'q':
                     break;
                 case 's':
-                    str = va_arg(vl, const char *);
-                    VGA::vga.display_string(str);
-                    written += strlen(str);
-                    break;
+                    {
+                        const char *str = va_arg(vl, const char *);
+                        VGA::vga.display_string(str);
+                        COM1.write_serial(str);
+                        written += strlen(str);
+                        break;
+                    }
                 case NULL:
                     return written;
                 default:
@@ -127,18 +146,20 @@ int printk(const char *fmt, ...) {
             }
             fmt++;
         } else {
-            if (*fmt == '\n' || *fmt == '\r') {
+            if (*fmt == '\n') {
                 VGA::vga.display_char('\n');
                 VGA::vga.display_char('\r');
+                COM1.write_serial('\n');
+            } else if (*fmt == '\r') {
             } else {
                 VGA::vga.display_char(*fmt);
                 VGA::vga.increment_cursor();
+                COM1.write_serial(*fmt);
             }
             written++;
         }
         fmt++;
     }
     va_end(vl);
-    sti();
     return written;
 }

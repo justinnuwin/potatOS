@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include "ps2.h"
+#include "asm_functions.h"
 #include "interrupt.h"
 #include "printk.h"
 

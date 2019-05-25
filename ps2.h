@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include "asm_functions.h"
 
 #ifndef PS2_H
 #define PS2_H
