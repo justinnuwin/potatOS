@@ -6,6 +6,7 @@
 #include "keyboard.h"
 #include "interrupt.h"
 #include "gdt.h"
+#include "serial.h"
 
 void wait_a_little() {
     int i = 100000;
@@ -18,10 +19,13 @@ void wait_longer() {
 }
 
 void kernel_main(void) {
+    setup_gdt_tss();
+    init_COM1();
     if (init_interrupts())
         printk("Interrupts enabled!\n");
     if (init_ps2())
         init_keyboard();
+    sti();
     wait_longer();
     clear_screen();
 
@@ -30,8 +34,6 @@ void kernel_main(void) {
     wait_longer();
     clear_screen();
 
-    setup_gdt_tss();
-    sti();
     printk("Success!\n");
     while (1) {
     }
