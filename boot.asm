@@ -55,6 +55,7 @@ section .text
 bits 32
 start:
     mov esp, stack_top1
+    mov edi, ebx    ; Save multiboot2 tag pointer
 
     ; Checks and paging are written using code from
     ; https://os.phil-opp.com/entering-longmode/

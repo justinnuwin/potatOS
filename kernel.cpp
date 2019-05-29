@@ -18,7 +18,7 @@ void wait_longer() {
     while (i--);
 }
 
-void kernel_main(void) {
+void kernel_main(int multiboot2_tag) {
     setup_gdt_tss();
     init_COM1();
     if (init_interrupts())
@@ -34,6 +34,7 @@ void kernel_main(void) {
     wait_longer();
     clear_screen();
 
+    printk("%x\n", multiboot2_tag);
     printk("Success!\n");
     while (1) {
     }
