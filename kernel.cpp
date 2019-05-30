@@ -8,6 +8,7 @@
 #include "gdt.h"
 #include "serial.h"
 #include "multiboot2_tags.h"
+#include "page_table.h"
 
 void wait_a_little() {
     int i = 100000;
@@ -28,6 +29,7 @@ void kernel_main(void *multiboot2_tag) {
         init_keyboard();
     sti();
     read_multiboot2_tags(multiboot2_tag);
+    MMU_pf_init();
     wait_longer();
     clear_screen();
 
@@ -39,5 +41,6 @@ void kernel_main(void *multiboot2_tag) {
 
     printk("Success!\n");
     while (1) {
+        printk("%x\n", MMU_pf_alloc());
     }
 }

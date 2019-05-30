@@ -8,6 +8,10 @@
 #define ELF64_SHT_PROGBITS  0x1
 #define ELF64_SHF_WRITE     0x1
 
+struct MemoryMap _multiboot2_memory_map[256];
+struct MemoryMap *multiboot2_memory_map = _multiboot2_memory_map;
+struct MemoryMap elf64_used_frames[256];
+
 struct Multiboot2Header {
     uint32_t size;
     uint32_t reserved;
@@ -85,13 +89,13 @@ int parse_memory_map_tag(struct Multiboot2TagHeader *tag) {
     while (size_read > 0) {
         if (mem_map_entry->type == MEM_MAP_FREE_REGION_TYPE) {
             multiboot2_memory_map[mem_map_idx].start = mem_map_entry->start;
-            multiboot2_memory_map[mem_map_idx].length = mem_map_entry->length;
+            multiboot2_memory_map[mem_map_idx].end = (uint8_t *)mem_map_entry->start + mem_map_entry->length;
             mem_map_idx++;
         }
         mem_map_entry++;
         size_read -= sizeof(*mem_map_entry);
     }
-    return (int)mem_map_idx + 1;
+    return (int)mem_map_idx;
 }
 
 // Returns number of free memory regions found
@@ -102,12 +106,12 @@ int parse_elf_symbols(struct Multiboot2TagHeader *tag) {
     while (header_counter-- > 0) {
         if (header->type == ELF64_SHT_PROGBITS) {
             elf64_used_frames[mem_map_idx].start = header->segment_address;
-            elf64_used_frames[mem_map_idx].length = header->segment_size;
+            elf64_used_frames[mem_map_idx].end = (uint8_t *)header->segment_address + header->segment_size;
             mem_map_idx++;
         }
         header++;
     }
-    return (int)mem_map_idx + 1;
+    return (int)mem_map_idx;
 }
 
 void parse_tag(struct Multiboot2TagHeader *tag) {
