@@ -30,14 +30,14 @@
 extern "C" void isr_wrapper(void);
 
 // Global initialization of interrupt descriptor table
-static struct interrupt_descriptor IDT[256];
+static struct InterruptDescriptor IDT[256];
 
-struct interrupt_descriptor_table {
+struct InterruptDescriptorTable {
     uint16_t length;
     void *base;
 } __attribute__ ((packed));
 
-static struct interrupt_descriptor_table IDTR;
+static struct InterruptDescriptorTable IDTR;
 
 void lidt(void *base, uint16_t size) {
     IDTR = {size, base};

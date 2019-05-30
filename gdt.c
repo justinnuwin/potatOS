@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "string.h"
 
-extern "C" const struct gdt_descriptor bs_gdt asm("gdt64.descriptor");
+extern "C" const struct GdtDescriptor bs_gdt asm("gdt64.descriptor");
 extern "C" void *stack_top1;
 extern "C" void *stack_top2;
 extern "C" void *stack_top3;
@@ -15,7 +15,7 @@ extern "C" void *stack_top7;
 /*
  * Segment limit and base ignored in long mode (paging is enforced)
  */
-struct code_segment_descriptor {
+struct CodeSegmentDescriptor {
     uint16_t limit_0_15;            // 0 - 15   (8 byte GDT entry)
     uint16_t base_0_15;             // 16 - 32
     uint8_t  base_16_23;            // 32 - 39
@@ -34,7 +34,7 @@ struct code_segment_descriptor {
     uint8_t  base_24_31;            // 56 - 63
 } __attribute__ ((packed));
 
-struct task_state_segment_descriptor {
+struct TaskStateSegmentDescriptor {
     uint16_t limit_0_15;            // 0 - 15   (8 byte GDT entry)
     uint16_t base_0_15;             // 16 - 32
     uint8_t  base_16_23;            // 32 - 39
@@ -58,7 +58,7 @@ struct task_state_segment_descriptor {
     uint32_t reserved3;             // 112 - 133
 } __attribute__ ((packed));
 
-struct tss {
+struct Tss {
     uint32_t reserved0;
     uint64_t rsp0;
     uint64_t rsp1;
@@ -76,37 +76,37 @@ struct tss {
     uint16_t io_map_base_addr;
 } __attribute__ ((packed));
 
-struct gdt_descriptor {
+struct GdtDescriptor {
     uint16_t size;
     void *base;
 } __attribute__ ((packed));
 
-struct gdt {
+struct Gdt {
     uint64_t zero;
-    struct code_segment_descriptor csd;
-    struct task_state_segment_descriptor tss;
+    struct CodeSegmentDescriptor csd;
+    struct TaskStateSegmentDescriptor tss;
 } __attribute__ ((packed));
 
-static struct gdt_descriptor GDTR;
+static struct GdtDescriptor GDTR;
 
-void lgdt(struct gdt *gdt) {
+void lgdt(struct Gdt *gdt) {
     GDTR = {sizeof(*gdt) - 1, gdt};
 
     asm volatile ("lgdt %0" : : "m"(GDTR));
 }
 
-void ltr(struct gdt *gdt) {
+void ltr(struct Gdt *gdt) {
     uint16_t tss_offset = (uint16_t)((uint64_t)&(gdt->tss) - (uint64_t)gdt);
 
     asm volatile ("ltr %0" : : "m"(tss_offset));
 }
 
-void copy_bootstrap_gdt(struct gdt *gdt) {
+void copy_bootstrap_gdt(struct Gdt *gdt) {
     memcpy(gdt, bs_gdt.base, bs_gdt.size + 1);
 }
 
-struct tss *setup_tss() {
-    static struct tss tss;
+struct Tss *setup_tss() {
+    static struct Tss tss;
     memset(&tss, 0, sizeof(tss));
     tss.ist1 = &stack_top1;
     tss.ist2 = &stack_top2;
@@ -120,9 +120,9 @@ struct tss *setup_tss() {
 }
 
 void setup_gdt_tss() {
-    static struct gdt gdt;
+    static struct Gdt gdt;
     copy_bootstrap_gdt(&gdt);
-    struct tss *tss = setup_tss();
+    struct Tss *tss = setup_tss();
     uint16_t tss_limit = sizeof(*tss);
     gdt.tss.limit_0_15 = tss_limit & 0xffffffff;
     gdt.tss.limit_16_19 = (uint8_t)((tss_limit >> 16) & 0xffff);
