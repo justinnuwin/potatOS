@@ -5,12 +5,12 @@
 
 #define MEM_MAP_FREE_REGION_TYPE 1
 
-#define ELF64_SHT_PROGBITS  0x1
 #define ELF64_SHF_WRITE     0x1
 
 struct MemoryMap _multiboot2_memory_map[256];
 struct MemoryMap *multiboot2_memory_map = _multiboot2_memory_map;
 struct MemoryMap elf64_used_frames[256];
+unsigned short elf64_num_used_frames;
 
 struct Multiboot2Header {
     uint32_t size;
@@ -104,14 +104,13 @@ int parse_elf_symbols(struct Multiboot2TagHeader *tag) {
     struct ELF64SectionHeader *header = (struct ELF64SectionHeader *)&(tag->data.elf_sym.section_header_start);
     uint32_t header_counter = tag->data.elf_sym.num_headers;
     while (header_counter-- > 0) {
-        if (header->type == ELF64_SHT_PROGBITS) {
-            elf64_used_frames[mem_map_idx].start = header->segment_address;
-            elf64_used_frames[mem_map_idx].end = (uint8_t *)header->segment_address + header->segment_size;
-            mem_map_idx++;
-        }
+        elf64_used_frames[mem_map_idx].start = header->segment_address;
+        elf64_used_frames[mem_map_idx].end = (uint8_t *)header->segment_address + header->segment_size;
+        mem_map_idx++;
         header++;
     }
-    return (int)mem_map_idx;
+    elf64_num_used_frames = mem_map_idx;
+    return elf64_num_used_frames;
 }
 
 void parse_tag(struct Multiboot2TagHeader *tag) {

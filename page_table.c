@@ -1,9 +1,17 @@
 #include "page_table.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 #include "multiboot2_tags.h"
+#include "printk.h"
 
 #define PAGE_SIZE 4096
+
+struct FreePageLinkList {
+    struct FreePageLinkList *next;
+};
+
+struct FreePageLinkList *free_pages_head = NULL;
 
 struct CR3 {
     uint32_t reserved0 : 3;
@@ -52,10 +60,10 @@ void MMU_pf_init() {
 
 bool address_used(void *address) {
     int idx = 0;
-    while (elf64_used_frames[idx].start != 0 &&
-           elf64_used_frames[idx].end != 0) {
-        if (address >= elf64_used_frames[idx].start &&
-            address <= elf64_used_frames[idx].end)
+    while (idx < elf64_num_used_frames) {
+        if ((elf64_used_frames[idx].start >= address && elf64_used_frames[idx].start <= (char *)address + PAGE_SIZE) ||
+            (elf64_used_frames[idx].end >= address && elf64_used_frames[idx].end <= (char *)address + PAGE_SIZE) ||
+            (address >= elf64_used_frames[idx].start && address <= elf64_used_frames[idx].end))
             return true;
         idx++;
     }
@@ -63,8 +71,24 @@ bool address_used(void *address) {
 }
 
 void *MMU_pf_alloc() {
+    if (free_pages_head) {
+        void *alloced_page = free_pages_head;
+        free_pages_head = free_pages_head->next;
+        return alloced_page;
+    }
+
+    if (multiboot2_memory_map->start == 0 &&
+        multiboot2_memory_map->end   == 0) {
+        printk("End of available memory regions!\n");
+        return NULL;
+    }
     if (current_page >= multiboot2_memory_map->start &&
         current_page <= multiboot2_memory_map->end) {
+            if ((unsigned long long)multiboot2_memory_map->end - (unsigned long long)current_page < PAGE_SIZE) {    // Next page is smaller than PAGE_SIZE
+                multiboot2_memory_map = (struct MemoryMap *)multiboot2_memory_map + 1;
+                current_page = multiboot2_memory_map->start;
+            }
+
             if (!address_used(current_page)) {
                 void *alloced_page = current_page;
                 current_page = (char *)current_page + PAGE_SIZE;
@@ -76,9 +100,25 @@ void *MMU_pf_alloc() {
     } else {
         multiboot2_memory_map = (struct MemoryMap *)multiboot2_memory_map + 1;
         current_page = multiboot2_memory_map->start;
-        return MMU_pf_alloc();
+        if (!address_used(current_page)) {
+            void *alloced_page = current_page;
+            current_page = (char *)current_page + PAGE_SIZE;
+            return alloced_page;
+        } else {
+            current_page = (char *)current_page + PAGE_SIZE;
+            return MMU_pf_alloc();
+        }
     }
 }
 
-void MMU_pf_free(void *) {
+void MMU_pf_free(void *address) {
+    if (!free_pages_head) {
+        free_pages_head = (struct FreePageLinkList *)address;
+        free_pages_head->next = NULL;
+    } else {
+        struct FreePageLinkList *node = free_pages_head;
+        while (node->next)
+            node = node->next;
+        node->next = (struct FreePageLinkList *)address;
+    }
 }

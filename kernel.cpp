@@ -38,9 +38,20 @@ void kernel_main(void *multiboot2_tag) {
     wait_longer();
     clear_screen();
 
-
     printk("Success!\n");
+    char a = '\0';
+    char *page = (char *)MMU_pf_alloc();
+    printk("%x\n", page);
+    MMU_pf_free(page);
+    page = (char *)MMU_pf_alloc();
+    printk("%x\n", page);
     while (1) {
-        printk("%x\n", MMU_pf_alloc());
+        for (int i = 0; i < 4096; i++) {
+                page[i] = a;
+        }
+        page = (char *)MMU_pf_alloc();
+        if (page == 0x0)
+            break;
+        a = (a + 1) % 128;
     }
 }
