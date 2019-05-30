@@ -5,6 +5,9 @@
 
 #define MEM_MAP_FREE_REGION_TYPE 1
 
+#define ELF64_SHT_PROGBITS  0x1
+#define ELF64_SHF_WRITE     0x1
+
 struct Multiboot2Header {
     uint32_t size;
     uint32_t reserved;
@@ -21,7 +24,7 @@ struct ELF64SectionHeader {
     uint32_t name_idx;
     uint32_t type;
     uint64_t flags;
-    uint64_t segment_address;
+    void *segment_address;
     uint64_t segment_offset;
     uint64_t segment_size;      // bytes
     uint32_t link_idx;
@@ -88,10 +91,24 @@ int parse_memory_map_tag(struct Multiboot2TagHeader *tag) {
         mem_map_entry++;
         size_read -= sizeof(*mem_map_entry);
     }
-    return (int)mem_map_idx + 1
+    return (int)mem_map_idx + 1;
 }
 
-void parse_memory_map_
+// Returns number of free memory regions found
+int parse_elf_symbols(struct Multiboot2TagHeader *tag) {
+    uint8_t mem_map_idx = 0;
+    struct ELF64SectionHeader *header = (struct ELF64SectionHeader *)&(tag->data.elf_sym.section_header_start);
+    uint32_t header_counter = tag->data.elf_sym.num_headers;
+    while (header_counter-- > 0) {
+        if (header->type == ELF64_SHT_PROGBITS) {
+            elf64_used_frames[mem_map_idx].start = header->segment_address;
+            elf64_used_frames[mem_map_idx].length = header->segment_size;
+            mem_map_idx++;
+        }
+        header++;
+    }
+    return (int)mem_map_idx + 1;
+}
 
 void parse_tag(struct Multiboot2TagHeader *tag) {
     switch (tag->type) {
@@ -115,9 +132,10 @@ void parse_tag(struct Multiboot2TagHeader *tag) {
                   );
             break;
         case 6:     // Memory Map
-            printk("Identified %u free memory regions!\n", parse_memory_map_tag(tag));
+            printk("Identified %d free memory regions!\n", parse_memory_map_tag(tag));
             break;
         case 9:     // ELF Symbols
+            printk("Identified %d used memory regions!\n", parse_elf_symbols(tag)); 
             break;
         default:
             printk("Unsupported multiboot2 tag: %u\n", tag->type);

@@ -9,6 +9,7 @@ struct MemoryMap {
 };
 
 struct MemoryMap multiboot2_memory_map[256];
+struct MemoryMap elf64_used_frames[256];
 
 void read_multiboot2_tags(void *pointer);
 
