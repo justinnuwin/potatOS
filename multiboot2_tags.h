@@ -5,10 +5,10 @@
 
 struct MemoryMap {
     void *start;
-    uint32_t length;
+    uint64_t length;
 };
 
-struct MemoryMap memory_map[256];
+struct MemoryMap multiboot2_memory_map[256];
 
 void read_multiboot2_tags(void *pointer);
 

@@ -10,6 +10,13 @@ struct Multiboot2Header {
     uint32_t reserved;
 } __attribute__ ((packed));
 
+struct MemoryMapEntry {
+    void *start;
+    uint64_t length;
+    uint32_t type;
+    uint32_t reserved;
+} __attribute__ ((packed));
+
 struct Multiboot2TagHeader {
     uint32_t type;
     uint32_t size;
@@ -28,12 +35,7 @@ struct Multiboot2TagHeader {
         struct {                    // Tag type 6
             uint32_t mem_entry_size;
             uint32_t mem_entry_version;
-            struct {
-                uint32_t start;
-                uint32_t length;
-                uint32_t type;
-                uint32_t reserved;
-            } memory_entry_start __attribute__ ((packed));
+            struct MemoryMapEntry memory_entry_start;
         } mem_map __attribute__ ((packed));
     } data;
 } __attribute__ ((packed));
@@ -54,6 +56,19 @@ struct Multiboot2TagHeader *next_tag(struct Multiboot2TagHeader *tag, uint32_t &
 }
 
 void parse_memory_map_tag(struct Multiboot2TagHeader *tag) {
+    uint8_t mem_map_idx = 0;
+    struct MemoryMapEntry *mem_map_entry = (struct MemoryMapEntry *)&(tag->data.mem_map.memory_entry_start);
+    uint32_t size_read = tag->size - sizeof(tag->type) - sizeof(tag->size) - sizeof(tag->data.mem_map.mem_entry_size) - sizeof(tag->data.mem_map.mem_entry_version);
+    while (size_read > 0) {
+        if (mem_map_entry->type == MEM_MAP_FREE_REGION_TYPE) {
+            multiboot2_memory_map[mem_map_idx].start = mem_map_entry->start;
+            multiboot2_memory_map[mem_map_idx].length = mem_map_entry->length;
+            mem_map_idx++;
+        }
+        mem_map_entry++;
+        size_read -= sizeof(*mem_map_entry);
+    }
+    printk("Identified %u free memory regions!\n", mem_map_idx + 1);
 }
 
 void parse_tag(struct Multiboot2TagHeader *tag) {
