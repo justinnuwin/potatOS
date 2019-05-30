@@ -7,6 +7,7 @@
 #include "interrupt.h"
 #include "gdt.h"
 #include "serial.h"
+#include "multiboot2_tags.h"
 
 void wait_a_little() {
     int i = 100000;
@@ -18,7 +19,7 @@ void wait_longer() {
     while (i--);
 }
 
-void kernel_main(int multiboot2_tag) {
+void kernel_main(void *multiboot2_tag) {
     setup_gdt_tss();
     init_COM1();
     if (init_interrupts())
@@ -26,6 +27,7 @@ void kernel_main(int multiboot2_tag) {
     if (init_ps2())
         init_keyboard();
     sti();
+    read_multiboot2_tags(multiboot2_tag);
     wait_longer();
     clear_screen();
 
@@ -34,7 +36,7 @@ void kernel_main(int multiboot2_tag) {
     wait_longer();
     clear_screen();
 
-    printk("%x\n", multiboot2_tag);
+
     printk("Success!\n");
     while (1) {
     }
