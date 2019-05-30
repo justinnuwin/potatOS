@@ -17,6 +17,19 @@ struct MemoryMapEntry {
     uint32_t reserved;
 } __attribute__ ((packed));
 
+struct ELF64SectionHeader {
+    uint32_t name_idx;
+    uint32_t type;
+    uint64_t flags;
+    uint64_t segment_address;
+    uint64_t segment_offset;
+    uint64_t segment_size;      // bytes
+    uint32_t link_idx;
+    uint32_t extra_info;
+    uint64_t address_alignment;
+    uint64_t fixed_entry_size;
+} __attribute__ ((packed));
+
 struct Multiboot2TagHeader {
     uint32_t type;
     uint32_t size;
@@ -37,6 +50,12 @@ struct Multiboot2TagHeader {
             uint32_t mem_entry_version;
             struct MemoryMapEntry memory_entry_start;
         } mem_map __attribute__ ((packed));
+        struct {                    // Tag type 9
+            uint32_t num_headers;
+            uint32_t size_headers;
+            uint32_t string_table_idx;
+            struct ELF64SectionHeader section_header_start;
+        } elf_sym __attribute__ ((packed));
     } data;
 } __attribute__ ((packed));
 
@@ -55,7 +74,8 @@ struct Multiboot2TagHeader *next_tag(struct Multiboot2TagHeader *tag, uint32_t &
     return (struct Multiboot2TagHeader *)next_tag;
 }
 
-void parse_memory_map_tag(struct Multiboot2TagHeader *tag) {
+// Returns number of free memory regions found
+int parse_memory_map_tag(struct Multiboot2TagHeader *tag) {
     uint8_t mem_map_idx = 0;
     struct MemoryMapEntry *mem_map_entry = (struct MemoryMapEntry *)&(tag->data.mem_map.memory_entry_start);
     uint32_t size_read = tag->size - sizeof(tag->type) - sizeof(tag->size) - sizeof(tag->data.mem_map.mem_entry_size) - sizeof(tag->data.mem_map.mem_entry_version);
@@ -68,8 +88,10 @@ void parse_memory_map_tag(struct Multiboot2TagHeader *tag) {
         mem_map_entry++;
         size_read -= sizeof(*mem_map_entry);
     }
-    printk("Identified %u free memory regions!\n", mem_map_idx + 1);
+    return (int)mem_map_idx + 1
 }
+
+void parse_memory_map_
 
 void parse_tag(struct Multiboot2TagHeader *tag) {
     switch (tag->type) {
@@ -93,7 +115,7 @@ void parse_tag(struct Multiboot2TagHeader *tag) {
                   );
             break;
         case 6:     // Memory Map
-            parse_memory_map_tag(tag);
+            printk("Identified %u free memory regions!\n", parse_memory_map_tag(tag));
             break;
         case 9:     // ELF Symbols
             break;
