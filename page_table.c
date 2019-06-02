@@ -51,8 +51,9 @@ struct PTL1Entry {  // Entry in the Page Table (PT)
  *  32    |                     | 
  */
 struct PTL4Entry PTL4[32];
-
 void *current_page;
+
+void *MMU_pf_alloc();
 
 void MMU_pf_init() {
     current_page = multiboot2_memory_map[0].start;
@@ -121,3 +122,8 @@ void MMU_pf_free(void *address) {
         node->next = (struct FreePageLinkList *)address;
     }
 }
+
+void *MMU_alloc_page() {}
+void *MMU_alloc_pages(int num) {}
+void MMU_free_page(void *) {}
+void MMU_free_pages(void *, int num) {}
