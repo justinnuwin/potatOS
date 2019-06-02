@@ -70,6 +70,22 @@ bool address_used(void *address) {
     return false;
 }
 
+inline void *MMU_get_next_pf() {
+    if (!address_used(current_page)) {
+        void *alloced_page = current_page;
+        current_page = (char *)current_page + PAGE_SIZE;
+        return alloced_page;
+    } else {
+        current_page = (char *)current_page + PAGE_SIZE;
+        return MMU_pf_alloc();
+    }
+}
+
+inline void MMU_increment_available_memory_map_region() {
+    multiboot2_memory_map = (struct MemoryMap *)multiboot2_memory_map + 1;
+    current_page = multiboot2_memory_map->start;
+}
+
 void *MMU_pf_alloc() {
     if (free_pages_head) {
         void *alloced_page = free_pages_head;
@@ -82,32 +98,15 @@ void *MMU_pf_alloc() {
         printk("End of available memory regions!\n");
         return NULL;
     }
+
     if (current_page >= multiboot2_memory_map->start &&
         current_page <= multiboot2_memory_map->end) {
-            if ((unsigned long long)multiboot2_memory_map->end - (unsigned long long)current_page < PAGE_SIZE) {    // Next page is smaller than PAGE_SIZE
-                multiboot2_memory_map = (struct MemoryMap *)multiboot2_memory_map + 1;
-                current_page = multiboot2_memory_map->start;
-            }
-
-            if (!address_used(current_page)) {
-                void *alloced_page = current_page;
-                current_page = (char *)current_page + PAGE_SIZE;
-                return alloced_page;
-            } else {
-                current_page = (char *)current_page + PAGE_SIZE;
-                return MMU_pf_alloc();
-            }
+            if ((char *)multiboot2_memory_map->end - (char *)current_page < PAGE_SIZE)
+                MMU_increment_available_memory_map_region();
+            return MMU_get_next_pf();
     } else {
-        multiboot2_memory_map = (struct MemoryMap *)multiboot2_memory_map + 1;
-        current_page = multiboot2_memory_map->start;
-        if (!address_used(current_page)) {
-            void *alloced_page = current_page;
-            current_page = (char *)current_page + PAGE_SIZE;
-            return alloced_page;
-        } else {
-            current_page = (char *)current_page + PAGE_SIZE;
-            return MMU_pf_alloc();
-        }
+        MMU_increment_available_memory_map_region();
+        return MMU_get_next_pf();
     }
 }
 
