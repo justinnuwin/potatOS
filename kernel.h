@@ -6,7 +6,7 @@
 #define KERNEL_H
 
 extern "C" {
-    void kernel_main(void);
+    void kernel_main(void *multiboot2_tag);
 }
 
 #endif

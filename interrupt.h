@@ -4,7 +4,7 @@
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
-struct interrupt_descriptor {
+struct InterruptDescriptor {
     uint16_t offset_0_15;
     uint16_t selector;
     uint8_t ist:2;
