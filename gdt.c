@@ -4,13 +4,13 @@
 #include "string.h"
 
 extern "C" const struct GdtDescriptor bs_gdt asm("gdt64.descriptor");
-extern "C" void *stack_top1;
-extern "C" void *stack_top2;
-extern "C" void *stack_top3;
-extern "C" void *stack_top4;
-extern "C" void *stack_top5;
-extern "C" void *stack_top6;
-extern "C" void *stack_top7;
+extern "C" void *ist1_top;
+extern "C" void *ist2_top;
+extern "C" void *ist3_top;
+extern "C" void *ist4_top;
+extern "C" void *ist5_top;
+extern "C" void *ist6_top;
+extern "C" void *ist7_top;
 
 /*
  * Segment limit and base ignored in long mode (paging is enforced)
@@ -108,13 +108,13 @@ void copy_bootstrap_gdt(struct Gdt *gdt) {
 struct Tss *setup_tss() {
     static struct Tss tss;
     memset(&tss, 0, sizeof(tss));
-    tss.ist1 = &stack_top1;
-    tss.ist2 = &stack_top2;
-    tss.ist3 = &stack_top3;
-    tss.ist4 = &stack_top4;
-    tss.ist5 = &stack_top5;
-    tss.ist6 = &stack_top6;
-    tss.ist7 = &stack_top7;
+    tss.ist1 = &ist1_top;
+    tss.ist2 = &ist2_top;
+    tss.ist3 = &ist3_top;
+    tss.ist4 = &ist4_top;
+    tss.ist5 = &ist5_top;
+    tss.ist6 = &ist6_top;
+    tss.ist7 = &ist7_top;
     tss.io_map_base_addr = sizeof(tss);
     return &tss;
 }

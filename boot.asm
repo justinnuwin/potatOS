@@ -1,12 +1,12 @@
 global start
 global gdt64.descriptor
-global stack_top1
-global stack_top2
-global stack_top3
-global stack_top4
-global stack_top5
-global stack_top6
-global stack_top7
+global ist1_top
+global ist2_top
+global ist3_top
+global ist4_top
+global ist5_top
+global ist6_top
+global ist7_top
 extern long_mode_start
 
 section .rodata
@@ -29,32 +29,32 @@ p2_table:       ; Page-Directory Table (PD)
     resb 4096
 p1_table:       ; Page Table (PT)
     resb 4096
-stack_bottom1:
+ist1_bottom:
     resb 4096
-stack_top1:
-stack_bottom2:
+ist1_top:
+ist2_bottom:
     resb 4096
-stack_top2:
-stack_bottom3:
+ist2_top:
+ist3_bottom:
     resb 4096
-stack_top3:
-stack_bottom4:
+ist3_top:
+ist4_bottom:
     resb 4096
-stack_top4:
-stack_bottom5:
+ist4_top:
+ist5_bottom:
     resb 4096
-stack_top5:
-stack_bottom6:
+ist5_top:
+ist6_bottom:
     resb 4096
-stack_top6:
-stack_bottom7:
+ist6_top:
+ist7_bottom:
     resb 4096
-stack_top7:
+ist7_top:
 
 section .text
 bits 32
 start:
-    mov esp, stack_top1
+    mov esp, ist1_top
     mov edi, ebx    ; Save multiboot2 tag pointer
 
     ; Checks and paging are written using code from
