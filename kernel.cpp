@@ -47,11 +47,15 @@ void kernel_main(void *multiboot2_tag) {
     printk("%x\n", page);
     while (1) {
         for (int i = 0; i < 4096; i++) {
-                page[i] = a;
+            page[i] = a;
+        }
+        for (int i = 0; i < 4096; i++) {
+            if (page[i] != a)
+                printk("Error at %x + %u\n", page, i);
         }
         page = (char *)MMU_pf_alloc();
         if (page == 0x0)
-            break;
+            asm volatile ("hlt"::);
         a = (a + 1) % 128;
     }
 }
