@@ -1,5 +1,6 @@
 global start
 global gdt64.descriptor
+global p4_table
 global ist1_top
 global ist2_top
 global ist3_top

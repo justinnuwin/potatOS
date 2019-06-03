@@ -9,19 +9,27 @@ align  4
     push rbp    ; Start new stack frame
     mov  rbp, rsp
     
-    push rbx
-    push r12
-    push r13
-    push r14
-    push r15
+    push r10
+    push r11
+    push rdi
+    push rsi
+    push rdx
+    push rcx
+    push r8
+    push r9
+    push rax
 %endmacro
 
 %macro cleanup_isr 0
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop rbx
+    pop rax
+    pop r9
+    pop r8
+    pop rcx
+    pop rdx
+    pop rsi
+    pop rdi
+    pop r11
+    pop r10
 
     mov rsp, rbp    ; Remove stack frame
     pop rbp

@@ -39,6 +39,8 @@ void kernel_main(void *multiboot2_tag) {
     clear_screen();
 
     printk("Success!\n");
+    sti();
     while (1) {
+        printk("%x\n", MMU_alloc_page());
     }
 }
