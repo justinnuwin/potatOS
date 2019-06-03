@@ -44,6 +44,7 @@ class VGA {
     void increment_cursor(enum vga_color bg);
     void increment_cursor();
 
+    friend void init_VGA();
     friend void clear_screen();
     friend void fill_screen(enum vga_color color);
     friend void splash_screen();
@@ -53,6 +54,7 @@ class VGA {
     friend int atoi_base16_display(uint64_t value, char a);
 };
 
+void init_VGA();
 void clear_screen();
 void fill_screen(enum vga_color color);
 void splash_screen();

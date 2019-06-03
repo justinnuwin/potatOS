@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include "vga.h"
 #include "string.h"
-#include "interrupt.h"
 #include "serial.h"
 
 int atoi_display(unsigned long long abs_val) {

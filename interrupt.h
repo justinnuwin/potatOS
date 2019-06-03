@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "asm_functions.h"
+
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
@@ -24,12 +26,25 @@ void IRQ_clear_mask(unsigned char IRQline);
 void register_isr(void (*isr_entry_pt)(void), uint8_t int_num);
 bool init_interrupts();
 
+static bool interrupts_enabled;
+
 inline void sti() {
     asm volatile ("sti" : : );
 }
 
 inline void cli() {
     asm volatile ("cli" : : );
+}
+
+inline void cli_st() {
+    bool int_state = are_interrupts_enabled();
+    cli();
+    interrupts_enabled = int_state;
+}
+
+inline void sti_cond() {
+    if (interrupts_enabled)
+        sti();
 }
 
 #endif

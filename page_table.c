@@ -23,17 +23,31 @@ struct CR3 {
     uint32_t reserved2 : 12;
 };
 
-struct PTL4Entry {  // Entry in the Page Map :evel 4 Table (PML4)
+// Bits 0 - 51 are the phyical address of the frame/next table with
+// the lower bits being OR-ed in
+struct PageTableEntry {
+    uint8_t present : 1;                // 0
+    uint8_t rw : 1;                     // 1
+    uint8_t user : 1;                   // 2
+    uint8_t write_thru_cache : 1;       // 3
+    uint8_t disable_cache : 1;          // 4
+    uint8_t accessed : 1;               // 5
+    uint8_t dirty : 1;                  // 6
+    uint8_t huge : 1;                   // 7
+    uint8_t global : 1;                 // 8
+    uint8_t available0 : 3;             // 9 - 11 
+    uint8_t address_0_3 : 4;            // 12 - 15
+    uint16_t address_4_19;              // 16 - 31
+    uint16_t address_20_35;             // 32 - 47
+    uint8_t address_36_39 : 4;          // 48 - 51
+    uint8_t available1 : 4;             // 52 - 55
+    uint8_t available2 : 7;             // 56 - 62
+    uint8_t not_executable : 1;         // 63
 } __attribute__ ((packed));
 
-struct PTL3Entry {  // Entry in the Page Directory Pointer Table (PDP)
-} __attribute__ ((packed));
-
-struct PTL2Entry {  // Entry in the Page Directory Table (PT)
-} __attribute__ ((packed));
-
-struct PTL1Entry {  // Entry in the Page Table (PT)
-} __attribute__ ((packed));
+struct PageTable {
+    struct PageTableEntry entry[512];
+} __attribute__ ((packed, align(4096)));
 
 /* Page Map Level 4 Table Map
  *  Slot  |     Base Address    |      Usage   
@@ -50,13 +64,27 @@ struct PTL1Entry {  // Entry in the Page Table (PT)
  *  16    | 0x100000000000      | User space
  *  32    |                     | 
  */
-struct PTL4Entry PTL4[32];
+struct PageTable *PTL4;  // Page Map Level 4 Table (PML4)
+
+struct PTL3 {  // Page Directory Pointer Table (PDP)
+    struct PageTableEntry entry[512];
+} __attribute__ ((packed, align(4096)));
+
+struct PTL2 {  // Page Directory Table (PT)
+    struct PageTableEntry entry[512];
+} __attribute__ ((packed, align(4096)));
+
+struct PTL1 {  // Page Table (PT)
+    struct PageTableEntry entry[512];
+} __attribute__ ((packed, align(4096)));
+
 void *current_page;
 
 void *MMU_pf_alloc();
 
 void MMU_pf_init() {
     current_page = multiboot2_memory_map[0].start;
+    PTL4 = (struct PageTable *)MMU_pf_alloc();
 }
 
 bool address_used(void *address) {
@@ -124,6 +152,7 @@ void MMU_pf_free(void *address) {
 }
 
 void *MMU_alloc_page() {}
+
 void *MMU_alloc_pages(int num) {}
 void MMU_free_page(void *) {}
 void MMU_free_pages(void *, int num) {}

@@ -29,6 +29,9 @@ p2_table:       ; Page-Directory Table (PD)
     resb 4096
 p1_table:       ; Page Table (PT)
     resb 4096
+stack_bottom:
+    resb 4096
+stack_top:
 ist1_bottom:
     resb 4096
 ist1_top:
@@ -54,7 +57,7 @@ ist7_top:
 section .text
 bits 32
 start:
-    mov esp, ist1_top
+    mov esp, stack_top
     mov edi, ebx    ; Save multiboot2 tag pointer
 
     ; Checks and paging are written using code from
@@ -135,6 +138,8 @@ check_long_mode:
     mov al, "2"
     jmp error
 
+; Set up 1GiB identity mapped page
+; 1 P4, P3, & P2 table with P2 Huge bit set => 512 2MiB pages
 setup_page_tables:
     ; Map first P4 entry to P3 table
     mov eax, p3_table
@@ -153,7 +158,7 @@ setup_page_tables:
     mov eax, 0x200000               ; 2MiB
     mul ecx                         ; start address of ecx-th page
     or eax, 0b10000011              ; present + writable + huge
-    mov [p2_table + ecx * 8], eax   ; map ecx-th entry
+    mov [p2_table + ecx * 8], eax   ; map ecx-th entry (each entry is 8 bytes)
     inc ecx
     cmp ecx, 512
     jne .map_p2_table

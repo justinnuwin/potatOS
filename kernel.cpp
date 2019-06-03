@@ -22,9 +22,9 @@ void wait_longer() {
 
 void kernel_main(void *multiboot2_tag) {
     setup_gdt_tss();
+    init_VGA();
     init_COM1();
-    if (init_interrupts())
-        printk("Interrupts enabled!\n");
+    init_interrupts();
     if (init_ps2())
         init_keyboard();
     sti();

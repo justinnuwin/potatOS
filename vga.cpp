@@ -11,11 +11,13 @@ static const int VGA_WIDTH = 80;
 static const int VGA_HEIGHT = 25;
 static uint16_t *const VGA_BUFFER_BASE_ADDR = (uint16_t *)0xb8000;
 
-VGA::VGA() {
-    cursor_row = 0;
-    cursor_col = 0;
-    cursor_buffer = VGA_BUFFER_BASE_ADDR;
+void init_VGA() {
+    VGA::vga.cursor_row = 0;
+    VGA::vga.cursor_col = 0;
+    VGA::vga.cursor_buffer = VGA_BUFFER_BASE_ADDR;
 }
+
+VGA::VGA() {}
 
 inline static uint16_t
 vga_char(char c, enum vga_color fg, enum vga_color bg, bool blink) {

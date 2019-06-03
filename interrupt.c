@@ -1,7 +1,5 @@
 #include "interrupt.h"
 
-#include "asm_functions.h"
-#include "printk.h"
 #include "generic_isr.h"
 
 #define PIC1            0x20    // IO base address for master PIC
