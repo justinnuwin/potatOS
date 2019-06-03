@@ -47,7 +47,7 @@ struct PageTableEntry {
 
 struct PageTable {
     struct PageTableEntry entry[512];
-} __attribute__ ((packed, align(4096)));
+} __attribute__ ((packed, aligned(4096)));
 
 /* Page Map Level 4 Table Map
  *  Slot  |     Base Address    |      Usage   
@@ -68,15 +68,15 @@ struct PageTable *PTL4;  // Page Map Level 4 Table (PML4)
 
 struct PTL3 {  // Page Directory Pointer Table (PDP)
     struct PageTableEntry entry[512];
-} __attribute__ ((packed, align(4096)));
+} __attribute__ ((packed, aligned(4096)));
 
 struct PTL2 {  // Page Directory Table (PT)
     struct PageTableEntry entry[512];
-} __attribute__ ((packed, align(4096)));
+} __attribute__ ((packed, aligned(4096)));
 
 struct PTL1 {  // Page Table (PT)
     struct PageTableEntry entry[512];
-} __attribute__ ((packed, align(4096)));
+} __attribute__ ((packed, aligned(4096)));
 
 void *current_page;
 
