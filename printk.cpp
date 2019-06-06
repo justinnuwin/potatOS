@@ -48,6 +48,7 @@ int print_unsigned(unsigned value) {
 // char a represents base for displaying letters in hex a:lowercase  A:uppercase
 int atoi_base16_display(uint64_t value, char a) {
     VGA::vga.display_string("0x");
+    COM1.write_serial("0x");
     int written = 2;
     int index = 15;         // hex char index of 64bit value (16 indexes)
     // uint64_t mask = 0xf << (64 - 4);
@@ -74,11 +75,11 @@ int atoi_base16_display(uint64_t value, char a) {
     return written;
 }
 
-int print_hex(unsigned value, char a) {
+int print_hex(uint64_t value, char a) {
     return atoi_base16_display((uint64_t)value, a);
 }
 
-int print_hex(unsigned value) {
+int print_hex(uint64_t value) {
     return print_hex(value, 'A');
 }
 

@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include "multiboot2_tags.h"
 #include "printk.h"
+#include "string.h"
 
 #define PAGE_SIZE 4096
 
@@ -35,7 +36,10 @@ struct PageTableEntry {
     uint8_t dirty : 1;                  // 6
     uint8_t huge : 1;                   // 7
     uint8_t global : 1;                 // 8
-    uint8_t available0 : 3;             // 9 - 11 
+    // uint8_t available0 : 3;             // 9 - 11 
+    uint8_t allocated : 1;              // 9
+    uint8_t copy_on_write : 1;          // 10
+    uint8_t available0 : 1;             // 11
     uint8_t address_0_3 : 4;            // 12 - 15
     uint16_t address_4_19;              // 16 - 31
     uint16_t address_20_35;             // 32 - 47
@@ -45,10 +49,15 @@ struct PageTableEntry {
     uint8_t not_executable : 1;         // 63
 } __attribute__ ((packed));
 
-struct PageTable {
-    struct PageTableEntry entry[512];
-} __attribute__ ((packed, aligned(4096)));
+#define PAGETABLEADDRMASK 0xFFFFFFFFFF000   // Bits 12 - 51 used for address
 
+union PageTable {
+    struct PageTableEntry entry[512];
+    void *entryAsAddr[512];
+};
+
+extern "C" union PageTable p4_table;
+extern "C" union PageTable p3_table;
 /* Page Map Level 4 Table Map
  *  Slot  |     Base Address    |      Usage   
  * -------|---------------------|------------------------
@@ -64,10 +73,11 @@ struct PageTable {
  *  16    | 0x100000000000      | User space
  *  32    |                     | 
  */
-struct PageTable *PTL4;  // Page Map Level 4 Table (PML4)
-unsigned heap_l3_idx = 0;
-unsigned heap_l2_idx = 0;
-unsigned heap_l1_idx = 0;
+union PageTable *PTL4;  // Page Map Level 4 Table (PML4)
+const unsigned long long heap_l4_idx = 15;
+unsigned long long heap_l3_idx = 0;
+unsigned long long heap_l2_idx = 0;
+unsigned long long heap_l1_idx = 0;
 
 // Page Directory Pointer Table (PDP)
 // Page Directory Table (PT)
@@ -76,27 +86,6 @@ unsigned heap_l1_idx = 0;
 void *current_page;
 
 void *MMU_pf_alloc();
-
-extern "C" struct PageTableEntry p4_table;
-void MMU_pf_init() {
-    current_page = multiboot2_memory_map[0].start;
-    PTL4 = (struct PageTable *)(&p4_table);
-    PTL4->entry[1].present = 1;    PTL4->entry[1].rw = 1;
-    PTL4->entry[2].present = 1;    PTL4->entry[2].rw = 1;
-    PTL4->entry[3].present = 1;    PTL4->entry[3].rw = 1;
-    PTL4->entry[4].present = 1;    PTL4->entry[4].rw = 1;
-    PTL4->entry[5].present = 1;    PTL4->entry[5].rw = 1;
-    PTL4->entry[6].present = 1;    PTL4->entry[6].rw = 1;
-    PTL4->entry[7].present = 1;    PTL4->entry[7].rw = 1;
-    PTL4->entry[8].present = 1;    PTL4->entry[8].rw = 1;
-    PTL4->entry[9].present = 1;    PTL4->entry[9].rw = 1;
-    PTL4->entry[10].present = 1;   PTL4->entry[10].rw = 1;
-    PTL4->entry[11].present = 1;   PTL4->entry[11].rw = 1;
-    PTL4->entry[12].present = 1;   PTL4->entry[12].rw = 1;
-    PTL4->entry[13].present = 1;   PTL4->entry[13].rw = 1;
-    PTL4->entry[14].present = 1;   PTL4->entry[14].rw = 1;
-    PTL4->entry[15].present = 1;   PTL4->entry[15].rw = 1;
-}
 
 bool address_used(void *address) {
     int idx = 0;
@@ -162,47 +151,87 @@ void MMU_pf_free(void *address) {
     }
 }
 
-void *get_address(struct PageTable *pt, unsigned index) {
-    struct PageTableEntry entry = pt->entry[index];
-    void *address = (void *)((entry.address_0_3 << 12)      |
-                             (entry.address_4_19 << 16)     |
-                             (entry.address_20_35 << 32)    |
-                             (entry.address_36_39 << 48));
-    return address;
-    // struct PageTable *ptl3 = (struct PageTable *)((void *)(PTL4->entry[15]) & (0xFFFFFFFFFF000));     // Mask everything but address
+inline void *get_address(union PageTable *pt, unsigned index) {
+    return (void *)((unsigned long long)pt->entryAsAddr[index] & PAGETABLEADDRMASK);
+}
+
+void init_identity_map_table() {
+    // boot.asm already allocated PTL4, PTL3, & PTL2 of PTL3[0] for us
+    for (int i = 1; i < 512; i++) {
+        union PageTable *ptl2 = (union PageTable *)MMU_pf_alloc();
+        p3_table.entryAsAddr[i] = (void *)ptl2;
+        p3_table.entry[i].present = 1;
+        p3_table.entry[i].rw = 1;
+        for (int j = 0; j < 512; j++) {
+            ptl2->entryAsAddr[j] = (void *)(0x200000 * j + 0x40000000 * i);      // 2MiB := 0x20 0000     1GiB := 0x4000 0000
+            ptl2->entry[j].present = 1;
+            ptl2->entry[j].rw = 1;
+            ptl2->entry[j].huge = 1;
+        }
+    }
+}
+
+void init_heap() {
+    heap_l3_idx = 0;
+    heap_l2_idx = 0;
+    heap_l1_idx = 0;
+    union PageTable *l3 = (union PageTable *)MMU_pf_alloc();
+    PTL4->entryAsAddr[15] = (void *)l3;
+    PTL4->entry[15].present = 1;   PTL4->entry[15].rw = 1;
+    union PageTable *l2 = (union PageTable *)MMU_pf_alloc();
+    l3->entryAsAddr[0] = (void *)l2;
+    l3->entry[0].present = 1;       l3->entry[0].rw = 1;
+    union PageTable *l1 = (union PageTable *)MMU_pf_alloc();
+    l2->entryAsAddr[0] = (void *)l1;
+    l2->entry[0].present = 1;       l2->entry[0].rw = 1;
+}
+
+void MMU_pf_init() {
+    current_page = multiboot2_memory_map[0].start;
+    PTL4 = &p4_table;
+    init_identity_map_table();
+    init_heap();
 }
 
 void *MMU_alloc_page() {
     // TODO: Traverse page tables to recoup free'ed frames
-    struct PageTable *ptl3 = (struct PageTable *)get_address(PTL4, 15);
-    struct PageTable *ptl2 = (struct PageTable *)get_address(ptl3, heap_l3_idx);
-    struct PageTable *ptl1 = (struct PageTable *)get_address(ptl2, heap_l2_idx);
-    ptl1->entry[heap_l1_idx].present = 1;
-    ptl1->entry[heap_l1_idx].rw = 1;
-    unsigned long long offset = (unsigned long long)get_address(ptl1, heap_l1_idx);
+    union PageTable *ptl3 = (union PageTable *)get_address(PTL4, heap_l4_idx);
+    union PageTable *ptl2 = (union PageTable *)get_address(ptl3, heap_l3_idx);
+    union PageTable *ptl1 = (union PageTable *)get_address(ptl2, heap_l2_idx);
+    ptl1->entry[heap_l1_idx].allocated = 1;
+    void *v_addr = (void *)((heap_l4_idx << 39)      |       // Heap is index 15 << (9 + 9 + 9 + 12)
+                            (heap_l3_idx << 30)      |
+                            (heap_l2_idx << 21)      |
+                            (heap_l1_idx << 12));
     heap_l1_idx++;
     if (heap_l1_idx >= 512) {
-        heap_l1_idx = 0;
         heap_l2_idx++;
-        ptl2->entry[heap_l2_idx].present = 1;
-        ptl2->entry[heap_l2_idx].rw = 1;
         if (heap_l2_idx >= 512) {
-            heap_l2_idx = 0;
             heap_l3_idx++;
-            ptl3->entry[heap_l3_idx].present = 1;
-            ptl3->entry[heap_l3_idx].rw = 1;
             if (heap_l3_idx >= 512) {
                 printk("Kernel heap exceeded!\n");
                 return NULL;
+            } else {
+                union PageTable *new_l2 = (union PageTable *)MMU_pf_alloc();
+                ptl3->entryAsAddr[heap_l3_idx] = (void *)new_l2;
+                ptl3->entry[heap_l3_idx].present = 1;
+                ptl3->entry[heap_l3_idx].rw = 1;
+                heap_l2_idx = 0;
+                union PageTable *new_l1 = (union PageTable *)MMU_pf_alloc();
+                ptl2->entryAsAddr[heap_l2_idx] = (void *)new_l1;
+                ptl2->entry[heap_l2_idx].present = 1;
+                ptl2->entry[heap_l2_idx].rw = 1;
+                heap_l1_idx = 0;
             }
+        } else {
+            union PageTable *new_l1 = (union PageTable *)MMU_pf_alloc();
+            ptl2->entryAsAddr[heap_l2_idx] = (void *)new_l1;
+            ptl2->entry[heap_l2_idx].present = 1;
+            ptl2->entry[heap_l2_idx].rw = 1;
+            heap_l1_idx = 0;
         }
     }
-    void *phys_addr = (void *)((15 << 39)                   |       // Heap is index 15 << (9 + 9 + 9 + 12)
-                               ((heap_l3_idx & 9) << 30)    |
-                               ((heap_l2_idx & 9) << 21)    |
-                               ((heap_l1_idx & 9) << 12))   +
-                              offset;
-    return phys_addr;
+    return v_addr;
 }
 
 void *MMU_alloc_pages(int num) {}
