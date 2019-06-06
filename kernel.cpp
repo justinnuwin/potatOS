@@ -40,8 +40,14 @@ void kernel_main(void *multiboot2_tag) {
 
     printk("Success!\n");
     sti();
-    void *newpage = MMU_alloc_page();
-    printk("%p\n", newpage);
+    char *new_page = (char *)MMU_alloc_page();
+    printk("%p\n", new_page);
+    *new_page = 'a';
+    printk("%c\n", *new_page);
+    MMU_free_page(new_page);
+    new_page = (char *)MMU_alloc_page();
+    printk("%p\n", new_page);
+    new_page = (char *)MMU_alloc_page();
     while (1) {
     }
 }

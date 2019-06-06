@@ -5,6 +5,7 @@
 #include "multiboot2_tags.h"
 #include "printk.h"
 #include "string.h"
+#include "interrupt.h"
 
 #define PAGE_SIZE 4096
 
@@ -171,6 +172,7 @@ void init_identity_map_table() {
     }
 }
 
+extern "C" void page_fault_isr_wrapper(void);
 void init_heap() {
     heap_l3_idx = 0;
     heap_l2_idx = 0;
@@ -184,6 +186,7 @@ void init_heap() {
     union PageTable *l1 = (union PageTable *)MMU_pf_alloc();
     l2->entryAsAddr[0] = (void *)l1;
     l2->entry[0].present = 1;       l2->entry[0].rw = 1;
+    register_isr(page_fault_isr_wrapper, 0xe);
 }
 
 void MMU_pf_init() {
@@ -214,26 +217,78 @@ void *MMU_alloc_page() {
             } else {
                 union PageTable *new_l2 = (union PageTable *)MMU_pf_alloc();
                 ptl3->entryAsAddr[heap_l3_idx] = (void *)new_l2;
-                ptl3->entry[heap_l3_idx].present = 1;
-                ptl3->entry[heap_l3_idx].rw = 1;
+                ptl3->entry[heap_l3_idx].present = 1;   ptl3->entry[heap_l3_idx].rw = 1;
                 heap_l2_idx = 0;
                 union PageTable *new_l1 = (union PageTable *)MMU_pf_alloc();
                 ptl2->entryAsAddr[heap_l2_idx] = (void *)new_l1;
-                ptl2->entry[heap_l2_idx].present = 1;
-                ptl2->entry[heap_l2_idx].rw = 1;
+                ptl2->entry[heap_l2_idx].present = 1;   ptl2->entry[heap_l2_idx].rw = 1;
                 heap_l1_idx = 0;
             }
         } else {
             union PageTable *new_l1 = (union PageTable *)MMU_pf_alloc();
             ptl2->entryAsAddr[heap_l2_idx] = (void *)new_l1;
-            ptl2->entry[heap_l2_idx].present = 1;
-            ptl2->entry[heap_l2_idx].rw = 1;
+            ptl2->entry[heap_l2_idx].present = 1;   ptl2->entry[heap_l2_idx].rw = 1;
             heap_l1_idx = 0;
         }
     }
     return v_addr;
 }
 
-void *MMU_alloc_pages(int num) {}
-void MMU_free_page(void *) {}
-void MMU_free_pages(void *, int num) {}
+void *MMU_alloc_pages(int num) {
+    void *v_addr = 0x0;
+    do {
+        num--;
+        if (!v_addr)
+            v_addr = MMU_alloc_page();
+        else 
+            MMU_alloc_page();
+    } while (num);
+    return v_addr;
+}
+
+void MMU_free_page(void *_vaddr) {
+    uint64_t vaddr = (uint64_t)_vaddr;
+    vaddr >>= 12;
+    unsigned l1_idx = vaddr & 0x1ff;
+    vaddr >>= 9;
+    unsigned l2_idx = vaddr & 0x1ff;
+    vaddr >>= 9;
+    unsigned l3_idx = vaddr & 0x1ff;
+    vaddr >>= 9;
+    unsigned l4_idx = vaddr & 0x1ff;
+    union PageTable *ptl3 = (union PageTable *)get_address(PTL4, l4_idx);
+    union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
+    union PageTable *ptl1 = (union PageTable *)get_address(ptl2, l2_idx);
+    void *phys_addr = (void *)(((uint64_t)ptl1->entryAsAddr[l1_idx]) & PAGETABLEADDRMASK);
+    printk("%p\n", phys_addr);
+    MMU_pf_free(phys_addr);
+    ptl1->entryAsAddr[l1_idx] = 0;
+}
+
+void MMU_free_pages(void *v_addr, int num) {
+    do {
+        num--;
+        MMU_free_page(v_addr);
+        v_addr = (void *)((char *)v_addr + 4096);
+    } while (num);
+}
+
+void page_fault_interrupt_handler(uint32_t code, uint64_t cr2) {
+    // Error code description: https://wiki.osdev.org/Exceptions#Page_Fault
+    cr2 >>= 12;
+    unsigned l1_idx = cr2 & 0x1ff;
+    cr2 >>= 9;
+    unsigned l2_idx = cr2 & 0x1ff;
+    cr2 >>= 9;
+    unsigned l3_idx = cr2 & 0x1ff;
+    cr2 >>= 9;
+    unsigned l4_idx = cr2 & 0x1ff;
+    union PageTable *ptl3 = (union PageTable *)get_address(PTL4, l4_idx);
+    union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
+    union PageTable *ptl1 = (union PageTable *)get_address(ptl2, l2_idx);
+    ptl1->entryAsAddr[l1_idx] = MMU_pf_alloc();
+    printk("%p\n", ptl1->entryAsAddr[l1_idx]);
+    ptl1->entry[l1_idx].present = 1;    ptl1->entry[l1_idx].rw = 1;
+    //ptl1->entry[l1_idx].not_executable = 1;
+    asm volatile ("invlpg %0" : : "m"(ptl1->entryAsAddr[l1_idx]));
+}

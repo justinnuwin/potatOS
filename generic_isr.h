@@ -1,7 +1,7 @@
 #ifndef GENERIC_ISR_H
 #define GENERIC_ISR_H 
 
-extern "C" void generic_exception_handler(unsigned number, unsigned code);
+extern "C" void generic_exception_handler(unsigned number, unsigned code, void *return_ip);
 extern "C" void generic_interrupt_handler(unsigned number);
 void load_generic_isr();
 

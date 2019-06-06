@@ -7,7 +7,7 @@ void halt(void) {
     asm volatile ("hlt"::);
 }
 
-void generic_exception_handler(unsigned number, unsigned code) {
+void generic_exception_handler(unsigned number, unsigned code, void *return_ip) {
     switch (number) {
         case 0x0:
             printk("#DE Unhandled exception %x: Divide by zero error fault\n", number);
@@ -51,8 +51,8 @@ void generic_exception_handler(unsigned number, unsigned code) {
             printk("#SS Unhandled exception %x: Stack segment fault: code %u\n", number, code);
             break;
         case 0xd:
-            printk("#GP Unhandled exception %x: General protection fault: code %u\n", number, code);
-            while (1);
+            printk("#GP Unhandled exception %x: General protection fault: code %u instruction %p\n", number, code, return_ip);
+            //while (1);
             break;
         case 0xe:
             printk("#PF Unhandled exception %x: Page fault: code %u\n", number, code);
