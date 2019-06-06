@@ -1,12 +1,14 @@
 global start
 global gdt64.descriptor
-global stack_top1
-global stack_top2
-global stack_top3
-global stack_top4
-global stack_top5
-global stack_top6
-global stack_top7
+global p4_table
+global p3_table
+global ist1_top
+global ist2_top
+global ist3_top
+global ist4_top
+global ist5_top
+global ist6_top
+global ist7_top
 extern long_mode_start
 
 section .rodata
@@ -29,32 +31,35 @@ p2_table:       ; Page-Directory Table (PD)
     resb 4096
 p1_table:       ; Page Table (PT)
     resb 4096
-stack_bottom1:
+stack_bottom:
     resb 4096
-stack_top1:
-stack_bottom2:
+stack_top:
+ist1_bottom:
     resb 4096
-stack_top2:
-stack_bottom3:
+ist1_top:
+ist2_bottom:
     resb 4096
-stack_top3:
-stack_bottom4:
+ist2_top:
+ist3_bottom:
     resb 4096
-stack_top4:
-stack_bottom5:
+ist3_top:
+ist4_bottom:
     resb 4096
-stack_top5:
-stack_bottom6:
+ist4_top:
+ist5_bottom:
     resb 4096
-stack_top6:
-stack_bottom7:
+ist5_top:
+ist6_bottom:
     resb 4096
-stack_top7:
+ist6_top:
+ist7_bottom:
+    resb 4096
+ist7_top:
 
 section .text
 bits 32
 start:
-    mov esp, stack_top1
+    mov esp, stack_top
     mov edi, ebx    ; Save multiboot2 tag pointer
 
     ; Checks and paging are written using code from
@@ -135,6 +140,8 @@ check_long_mode:
     mov al, "2"
     jmp error
 
+; Set up 1GiB identity mapped page
+; 1 P4, P3, & P2 table with P2 Huge bit set => 512 2MiB pages
 setup_page_tables:
     ; Map first P4 entry to P3 table
     mov eax, p3_table
@@ -153,7 +160,7 @@ setup_page_tables:
     mov eax, 0x200000               ; 2MiB
     mul ecx                         ; start address of ecx-th page
     or eax, 0b10000011              ; present + writable + huge
-    mov [p2_table + ecx * 8], eax   ; map ecx-th entry
+    mov [p2_table + ecx * 8], eax   ; map ecx-th entry (each entry is 8 bytes)
     inc ecx
     cmp ecx, 512
     jne .map_p2_table

@@ -1,7 +1,5 @@
 #include "interrupt.h"
 
-#include "asm_functions.h"
-#include "printk.h"
 #include "generic_isr.h"
 
 #define PIC1            0x20    // IO base address for master PIC
@@ -134,7 +132,7 @@ bool init_interrupts() {
         IDT[i].present = 1;
     }
     IDT[0x8].ist = 1;       // #DF Use stack 1
-    IDT[0xd].ist = 1;       // #GP Use stack 1
+    IDT[0xd].ist = 2;       // #GP Use stack 1
     IDT[0xe].ist = 1;       // #PF Use stack 1
     load_generic_isr();
     lidt(&IDT, (uint16_t)sizeof(IDT) - 1);

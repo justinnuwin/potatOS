@@ -22,9 +22,9 @@ void wait_longer() {
 
 void kernel_main(void *multiboot2_tag) {
     setup_gdt_tss();
+    init_VGA();
     init_COM1();
-    if (init_interrupts())
-        printk("Interrupts enabled!\n");
+    init_interrupts();
     if (init_ps2())
         init_keyboard();
     sti();
@@ -39,23 +39,15 @@ void kernel_main(void *multiboot2_tag) {
     clear_screen();
 
     printk("Success!\n");
-    char a = '\0';
-    char *page = (char *)MMU_pf_alloc();
-    printk("%x\n", page);
-    MMU_pf_free(page);
-    page = (char *)MMU_pf_alloc();
-    printk("%x\n", page);
+    sti();
+    char *new_page = (char *)MMU_alloc_page();
+    printk("%p\n", new_page);
+    *new_page = 'a';
+    printk("%c\n", *new_page);
+    MMU_free_page(new_page);
+    new_page = (char *)MMU_alloc_page();
+    printk("%p\n", new_page);
+    new_page = (char *)MMU_alloc_page();
     while (1) {
-        for (int i = 0; i < 4096; i++) {
-            page[i] = a;
-        }
-        for (int i = 0; i < 4096; i++) {
-            if (page[i] != a)
-                printk("Error at %x + %u\n", page, i);
-        }
-        page = (char *)MMU_pf_alloc();
-        if (page == 0x0)
-            asm volatile ("hlt"::);
-        a = (a + 1) % 128;
     }
 }

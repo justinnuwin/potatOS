@@ -1,7 +1,5 @@
-global keyboard_isr_wrapper
 extern generic_interrupt_handler
 extern generic_exception_handler
-extern keyboard_interrupt_handler
 extern PIC_sendEOI
 align  4
 
@@ -9,19 +7,27 @@ align  4
     push rbp    ; Start new stack frame
     mov  rbp, rsp
     
-    push rbx
-    push r12
-    push r13
-    push r14
-    push r15
+    push r10
+    push r11
+    push rdi
+    push rsi
+    push rdx
+    push rcx
+    push r8
+    push r9
+    push rax
 %endmacro
 
 %macro cleanup_isr 0
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop rbx
+    pop rax
+    pop r9
+    pop r8
+    pop rcx
+    pop rdx
+    pop rsi
+    pop rdi
+    pop r11
+    pop r10
 
     mov rsp, rbp    ; Remove stack frame
     pop rbp
@@ -30,14 +36,27 @@ align  4
 section .text
 bits 64
 
+global keyboard_isr_wrapper
+extern keyboard_interrupt_handler
 keyboard_isr_wrapper:
     setup_isr
     cld         ; C code following sysV ABI requires DF be cleared on call
     call keyboard_interrupt_handler
     cleanup_isr
-    mov rdi, 0x21
-    call PIC_sendEOI
     iretq
+
+global page_fault_isr_wrapper
+extern page_fault_interrupt_handler
+page_fault_isr_wrapper:
+    pop rbx
+    setup_isr
+    cld         ; C code following sysV ABI requires DF be cleared on call
+    mov rdi, rbx
+    mov rsi, cr2
+    call page_fault_interrupt_handler
+    cleanup_isr
+    iretq
+
 
 ;
 ; Declare generic interrupt handlers
@@ -52,22 +71,21 @@ keyboard_isr_wrapper:
         mov rsi, 0
         call generic_exception_handler
         cleanup_isr
-        mov rdi, %1
-        call PIC_sendEOI
         iretq
 %endmacro
 
 %macro exception_err 1
     global isr_wrapper_%1
     isr_wrapper_%1:
+        pop rbx
+        pop r12
         setup_isr
         cld         ; C code following sysV ABI requires DF be cleared on call
         mov rdi, %1
-        pop rsi
+        mov rsi, rbx
+        mov rdx, r12
         call generic_exception_handler
         cleanup_isr
-        mov rdi, %1
-        call PIC_sendEOI
         iretq
 %endmacro
 
@@ -75,29 +93,28 @@ keyboard_isr_wrapper:
 %macro isr 1
     global isr_wrapper_%1
     isr_wrapper_%1:
-        push rbp    ; Start new stack frame
-        mov  rbp, rsp
-        
-        push rbx
-        push r12
-        push r13
-        push r14
-        push r15
+        setup_isr
 
         cld         ; C code following sysV ABI requires DF be cleared on call
         mov rdi, %1
         call generic_interrupt_handler
 
-        pop r15
-        pop r14
-        pop r13
-        pop r12
-        pop rbx
+        cleanup_isr
+        iretq
+%endmacro
 
-        mov rsp, rbp    ; Remove stack frame
-        pop rbp
+%macro pic_isr 1
+    global isr_wrapper_%1
+    isr_wrapper_%1:
+        setup_isr
+
+        cld         ; C code following sysV ABI requires DF be cleared on call
+        mov rdi, %1
+        call generic_interrupt_handler
+
         mov rdi, %1
         call PIC_sendEOI
+        cleanup_isr
         iretq
 %endmacro
 
@@ -134,22 +151,22 @@ exception_no_err 0x1d
 exception_err 0x1e
 exception_no_err 0x1f
 
-isr 0x20
-isr 0x21
-isr 0x22
-isr 0x23
-isr 0x24
-isr 0x25
-isr 0x26
-isr 0x27
-isr 0x28
-isr 0x29
-isr 0x2a
-isr 0x2b
-isr 0x2c
-isr 0x2d
-isr 0x2e
-isr 0x2f
+pic_isr 0x20
+pic_isr 0x21
+pic_isr 0x22
+pic_isr 0x23
+pic_isr 0x24
+pic_isr 0x25
+pic_isr 0x26
+pic_isr 0x27
+pic_isr 0x28
+pic_isr 0x29
+pic_isr 0x2a
+pic_isr 0x2b
+pic_isr 0x2c
+pic_isr 0x2d
+pic_isr 0x2e
+pic_isr 0x2f
 
 isr 0x30
 isr 0x31
