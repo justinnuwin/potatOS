@@ -9,6 +9,7 @@
 #include "serial.h"
 #include "multiboot2_tags.h"
 #include "page_table.h"
+#include "kmalloc.h"
 
 void wait_a_little() {
     int i = 100000;
@@ -30,6 +31,7 @@ void kernel_main(void *multiboot2_tag) {
     sti();
     read_multiboot2_tags(multiboot2_tag);
     MMU_pf_init();
+    init_heap();
     wait_longer();
     clear_screen();
 
@@ -40,14 +42,12 @@ void kernel_main(void *multiboot2_tag) {
 
     printk("Success!\n");
     sti();
-    char *new_page = (char *)MMU_alloc_page();
-    printk("%p\n", new_page);
-    *new_page = 'a';
-    printk("%c\n", *new_page);
-    MMU_free_page(new_page);
-    new_page = (char *)MMU_alloc_page();
-    printk("%p\n", new_page);
-    new_page = (char *)MMU_alloc_page();
+    int *a = (int *)kmalloc(sizeof(int) * 500);
+    int *b = (int *)kmalloc(sizeof(int) * 10);
+    int *c = (int *)kmalloc(sizeof(int) * 500);
+    int *d = (int *)kmalloc(sizeof(int) * 16);
+    kfree(a);
+    a = (int *)kmalloc(sizeof(int) * 500);
     while (1) {
     }
 }
