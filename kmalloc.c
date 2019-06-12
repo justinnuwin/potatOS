@@ -58,31 +58,27 @@ int get_min_block_size(int size) {
         return NULL;
 }
 
-void append_pool(void *addr, int block_size) {
-    struct KmallocPool *pool;
+struct KmallocPool *get_pool(int block_size) {
     switch (block_size) {
         case 32:
-            pool = &b32_pool;
-            break;
+            return &b32_pool;
         case 64:
-            pool = &b64_pool;
-            break;
+            return &b64_pool;
         case 128:
-            pool = &b128_pool;
-            break;
+            return &b128_pool;
         case 256:
-            pool = &b256_pool;
-            break;
+            return &b256_pool;
         case 512:
-            pool = &b512_pool;
-            break;
+            return &b512_pool;
         case 1024:
-            pool = &b1024_pool;
-            break;
+            return &b1024_pool;
         case 2048:
-            pool = &b2048_pool;
-            break;
+            return &b2048_pool;
     }
+}
+
+void append_pool(void *addr, int block_size) {
+    struct KmallocPool *pool = get_pool(block_size);
     if (!(pool->head)) {
         pool->head = (struct KmallocHeader *)addr;
         pool->head->u.next = NULL;
@@ -104,6 +100,16 @@ void *kmalloc(int size) {
 
     int full_size = size + sizeof(struct KmallocHeader);
     int block_size = get_min_block_size(full_size);
+
+    struct KmallocPool *pool = get_pool(block_size);
+    if (pool->head) {
+        struct KmallocHeader *allocated = pool->head;
+        pool->head = pool->head->u.next;
+        allocated->u.pool = pool;
+        allocated->size = size;
+        allocated->available = 0;
+        return (char *)allocated + sizeof(struct KmallocHeader);
+    }
     
     if ((uint64_t)brk + full_size > (uint64_t)current_page + 4096) {
         int page_remaining = (uint64_t)current_page + 4096 - (uint64_t)brk;
