@@ -154,4 +154,5 @@ void *kmalloc(int size) {
 void kfree(void *addr) {
     struct KmallocHeader *header = (struct KmallocHeader *)((char *)addr - sizeof(struct KmallocHeader));
     append_pool(header);
+    // TODO: Look at previous block and next block and coalesce
 }
