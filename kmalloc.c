@@ -83,12 +83,19 @@ void append_pool(void *addr, int block_size) {
             pool = &b2048_pool;
             break;
     }
-    struct KmallocHeader *header = pool->head;
-    while (header->u.next)
-        header = header->u.next;
-    header->u.next = (struct KmallocHeader *)addr;
-    header->u.next->size = block_size;
-    header->u.next->available = 1;
+    if (!(pool->head)) {
+        pool->head = (struct KmallocHeader *)addr;
+        pool->head->u.next = NULL;
+        pool->head->size = block_size;
+        pool->head->available = 1;
+    } else {
+        struct KmallocHeader *header = pool->head;
+        while (header->u.next)
+            header = header->u.next;
+        header->u.next = (struct KmallocHeader *)addr;
+        header->u.next->size = block_size;
+        header->u.next->available = 1;
+    }
 }
 
 void *kmalloc(int size) {
@@ -102,10 +109,13 @@ void *kmalloc(int size) {
         int page_remaining = (uint64_t)current_page + 4096 - (uint64_t)brk;
         while (page_remaining > 0) {
             int _block_size = get_min_block_size(page_remaining);
+            while (_block_size > page_remaining)
+                _block_size >>= 1;
             append_pool(brk, _block_size);
             brk = (char *)brk + _block_size;
             page_remaining -= _block_size;
-            // TODO: increment curent page
+            brk = MMU_alloc_page();
+            current_page = brk;
         }
     }
     ((struct KmallocHeader *)brk)->u.next = NULL;
