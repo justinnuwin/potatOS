@@ -84,7 +84,7 @@ unsigned long long heap_l1_idx = 0;
 // Page Directory Table (PT)
 // Page Table (PT)
 
-void *current_page;
+static void *current_page;
 
 void *MMU_pf_alloc();
 
@@ -173,7 +173,7 @@ void init_identity_map_table() {
 }
 
 extern "C" void page_fault_isr_wrapper(void);
-void init_heap() {
+void init_heap_pt() {
     heap_l3_idx = 0;
     heap_l2_idx = 0;
     heap_l1_idx = 0;
@@ -193,7 +193,7 @@ void MMU_pf_init() {
     current_page = multiboot2_memory_map[0].start;
     PTL4 = &p4_table;
     init_identity_map_table();
-    init_heap();
+    init_heap_pt();
 }
 
 void *MMU_alloc_page() {
@@ -260,7 +260,6 @@ void MMU_free_page(void *_vaddr) {
     union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
     union PageTable *ptl1 = (union PageTable *)get_address(ptl2, l2_idx);
     void *phys_addr = (void *)(((uint64_t)ptl1->entryAsAddr[l1_idx]) & PAGETABLEADDRMASK);
-    printk("%p\n", phys_addr);
     MMU_pf_free(phys_addr);
     ptl1->entryAsAddr[l1_idx] = 0;
 }
@@ -287,8 +286,6 @@ void page_fault_interrupt_handler(uint32_t code, uint64_t cr2) {
     union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
     union PageTable *ptl1 = (union PageTable *)get_address(ptl2, l2_idx);
     ptl1->entryAsAddr[l1_idx] = MMU_pf_alloc();
-    printk("%p\n", ptl1->entryAsAddr[l1_idx]);
     ptl1->entry[l1_idx].present = 1;    ptl1->entry[l1_idx].rw = 1;
-    //ptl1->entry[l1_idx].not_executable = 1;
     asm volatile ("invlpg %0" : : "m"(ptl1->entryAsAddr[l1_idx]));
 }
