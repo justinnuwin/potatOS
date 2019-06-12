@@ -46,6 +46,8 @@ void kernel_main(void *multiboot2_tag) {
     int *b = (int *)kmalloc(sizeof(int) * 10);
     int *c = (int *)kmalloc(sizeof(int) * 500);
     int *d = (int *)kmalloc(sizeof(int) * 16);
+    kfree(a);
+    a = (int *)kmalloc(sizeof(int) * 500);
     while (1) {
     }
 }

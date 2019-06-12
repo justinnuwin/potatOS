@@ -3,6 +3,7 @@
 
 struct KmallocPool {
     struct KmallocHeader *head;
+    int block_size;
 };
 
 struct KmallocHeader {
@@ -22,13 +23,13 @@ struct Kmalloc {
 };
 */
 
-struct KmallocPool b32_pool = {0};
-struct KmallocPool b64_pool = {0};
-struct KmallocPool b128_pool = {0};
-struct KmallocPool b256_pool = {0};
-struct KmallocPool b512_pool = {0};
-struct KmallocPool b1024_pool = {0};
-struct KmallocPool b2048_pool = {0};
+struct KmallocPool b32_pool = {NULL, 32};
+struct KmallocPool b64_pool = {NULL, 64};
+struct KmallocPool b128_pool = {NULL, 128};
+struct KmallocPool b256_pool = {NULL, 256};
+struct KmallocPool b512_pool = {NULL, 512};
+struct KmallocPool b1024_pool = {NULL, 1024};
+struct KmallocPool b2048_pool = {NULL, 2048};
 
 void *brk;
 static void *current_page;
@@ -77,6 +78,24 @@ struct KmallocPool *get_pool(int block_size) {
     }
 }
 
+void append_pool(struct KmallocHeader *header) {
+    struct KmallocPool *pool = header->u.pool;
+    if (!(pool->head)) {
+        pool->head = header;
+        pool->head->u.next = NULL;
+        pool->head->size = pool->block_size;
+        pool->head->available = 1;
+    } else {
+        struct KmallocHeader *free_header = pool->head;
+        while (free_header->u.next)
+            free_header = free_header->u.next;
+        free_header->u.next = header;
+        header->u.next->size = pool->block_size;
+        header->u.next->available = 1;
+    }
+}
+
+// addr should be struct KmallocHeader *
 void append_pool(void *addr, int block_size) {
     struct KmallocPool *pool = get_pool(block_size);
     if (!(pool->head)) {
@@ -111,6 +130,7 @@ void *kmalloc(int size) {
         return (char *)allocated + sizeof(struct KmallocHeader);
     }
     
+    // Set rest of page as free and allocate this obj on next page frame
     if ((uint64_t)brk + full_size > (uint64_t)current_page + 4096) {
         int page_remaining = (uint64_t)current_page + 4096 - (uint64_t)brk;
         while (page_remaining > 0) {
@@ -124,10 +144,14 @@ void *kmalloc(int size) {
             current_page = brk;
         }
     }
-    ((struct KmallocHeader *)brk)->u.next = NULL;
+    ((struct KmallocHeader *)brk)->u.pool = pool;
     ((struct KmallocHeader *)brk)->size = size;
+    void *allocated = (char *)brk + sizeof(struct KmallocHeader);
     brk = (char *)brk + block_size;
-    return (char *)brk + sizeof(struct KmallocHeader);
+    return allocated;
 }
 
-void kfree(void *addr);
+void kfree(void *addr) {
+    struct KmallocHeader *header = (struct KmallocHeader *)((char *)addr - sizeof(struct KmallocHeader));
+    append_pool(header);
+}
