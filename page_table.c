@@ -205,7 +205,7 @@ void init_heap_pt() {
 
 void init_stacks_pt() {
    for (int i = 1; i < 15; i++) {
-      PTL4.entry[i].present = 1;    PTL4.entry[i].rw = 1;
+      PTL4->entry[i].present = 1;    PTL4->entry[i].rw = 1;
    }
 }
 
@@ -311,7 +311,7 @@ void page_fault_interrupt_handler(uint32_t code, uint64_t cr2) {
     }
     union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
     if (!(ptl2->entry[l2_idx].present) && l4_idx < 15) {
-        ptl2->entry[l2_idx].present = 1;    ptl2->entry[l2_idx].re = 1;
+        ptl2->entry[l2_idx].present = 1;    ptl2->entry[l2_idx].rw = 1;
     }
     union PageTable *ptl1 = (union PageTable *)get_address(ptl2, l2_idx);
     ptl1->entryAsAddr[l1_idx] = MMU_pf_alloc();

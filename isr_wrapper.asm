@@ -60,10 +60,11 @@ page_fault_isr_wrapper:
 global sys_call_isr_wrapper
 extern sys_call_interrupt_handler
 sys_call_isr_wrapper:
-    push rbp    ; start new stack frame
-    push rsp
-    move rbp, rsp
-
+    ; Return SS
+    ; Return RSP
+    ; RFlags
+    ; Return CS
+    ; RIP
     push rax
     push rbx
     push rcx
@@ -78,15 +79,19 @@ sys_call_isr_wrapper:
     push r13
     push r14
     push r15
-    push cs
-    push ss
-    push ds
-    push es
+    ;push cs
+    ;push ss
+    ;push ds
+    ;push es
     push fs
     push gs
+    push rbp
+    push rsp
     
-
+    ; TODO: Get syscall number from previous stack
+    mov rdi, rsp
     call sys_call_interrupt_handler
+    iretq
 
 
 ;

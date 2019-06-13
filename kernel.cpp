@@ -10,6 +10,7 @@
 #include "multiboot2_tags.h"
 #include "page_table.h"
 #include "kmalloc.h"
+#include "threading.h"
 
 void wait_a_little() {
     int i = 100000;
@@ -19,6 +20,10 @@ void wait_a_little() {
 void wait_longer() {
     int i = 50000000;
     while (i--);
+}
+
+void test(void *) {
+    printk("Hello");
 }
 
 void kernel_main(void *multiboot2_tag) {
@@ -42,19 +47,8 @@ void kernel_main(void *multiboot2_tag) {
 
     printk("Success!\n");
     sti();
-    int *a = (int *)kmalloc(sizeof(int) * 500);
-    int *b = (int *)kmalloc(sizeof(int) * 10);
-    int *c = (int *)kmalloc(sizeof(int) * 500);
-    int *d = (int *)kmalloc(sizeof(int) * 16);
-    kfree(a);
-    a = (int *)kmalloc(sizeof(int) * 500);
-    void *z = kmalloc(1);
-    void *y = kmalloc(32);
-    void *x = kmalloc(64);
-    void *w = kmalloc(128);
-    void *q = kmalloc(256);
-    void *u = kmalloc(512);
-    void *n = kmalloc(1024);
+    PROC_create_kthread(test, 0x0);
     while (1) {
+        PROC_run();
     }
 }

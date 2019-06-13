@@ -8,7 +8,7 @@ void PROC_run();
 void PROC_create_kthread(kproc_t entry_point, void *args);
 
 inline void yield(void) {
-    asm volatile ("int 0x80");
+    asm volatile ("int $0x80");
 }
 
 #endif

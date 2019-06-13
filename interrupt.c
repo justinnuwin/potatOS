@@ -133,6 +133,7 @@ bool init_interrupts() {
                 break;
             default:
                 IDT[i].type = IST_INT_GATE;
+        }
         IDT[i].protection_level = 0;
         IDT[i].present = 1;
     }
