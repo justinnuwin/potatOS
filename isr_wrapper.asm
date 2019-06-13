@@ -60,6 +60,10 @@ page_fault_isr_wrapper:
 global sys_call_isr_wrapper
 extern sys_call_iinterrupt_handler
 sys_call_isr_wrapper:
+    push rbp    ; start new stack frame
+    push rsp
+    move rbp, rsp
+
     push rax
     push rbx
     push rcx
@@ -70,8 +74,17 @@ sys_call_isr_wrapper:
     push r9
     push r10
     push r11
-; TODO: Finish this
-    
+    push r12
+    push r13
+    push r14
+    push r15
+    push cs
+    push ss
+    push ds
+    push es
+    push fs
+    push gs
+    ; TODO: Finish this
     
 
 
