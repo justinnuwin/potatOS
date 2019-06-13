@@ -140,9 +140,9 @@ void *kmalloc(int size) {
             append_pool(brk, _block_size);
             brk = (char *)brk + _block_size;
             page_remaining -= _block_size;
-            brk = MMU_alloc_page();
-            current_page = brk;
         }
+        brk = MMU_alloc_page();
+        current_page = brk;
     }
     ((struct KmallocHeader *)brk)->u.pool = pool;
     ((struct KmallocHeader *)brk)->size = size;
