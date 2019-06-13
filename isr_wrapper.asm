@@ -57,6 +57,23 @@ page_fault_isr_wrapper:
     cleanup_isr
     iretq
 
+global sys_call_isr_wrapper
+extern sys_call_iinterrupt_handler
+sys_call_isr_wrapper:
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rdi
+    push rsi
+    push r8
+    push r9
+    push r10
+    push r11
+; TODO: Finish this
+    
+    
+
 
 ;
 ; Declare generic interrupt handlers
