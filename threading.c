@@ -5,6 +5,9 @@
 
 #define MAX_NUM_THREADS 14      // Set by number of PTL4 entries reserved for kernel stacks
 
+struct KThread current_thread;
+struct KThread next_thread;
+
 struct KThread {
     int stack_num;
     kproc_t entry_point;
@@ -16,13 +19,6 @@ struct KThread *threads[MAX_NUM_THREADS + 1] = {0};    // Ignore index 0
 extern "C" void sys_call_isr_wrapper(void);
 void init_threading() {
     register_isr(sys_call_isr_wrapper, 0x80);
-}
-
-void PROC_run() {
-    for (int i = 1; i <= MAX_NUM_THREADS; i++) {
-        if (!threads[i])
-            threads[i]->entry_point(args);
-    }
 }
 
 void PROC_create_kthread(kproc_t entry_point, void *args) {
@@ -40,5 +36,16 @@ void PROC_create_kthread(kproc_t entry_point, void *args) {
 
 void PROC_reschedule();
 
+void PROC_run() {
+    if (current_thread)
+        yield();
+    else
+        PROC_reschedule();
+}
+
 void kexit();
 
+extern "C" void sys_call_interrupt_handler() {
+    switch (current_thread.
+    current_thread.entry_point(args);
+}

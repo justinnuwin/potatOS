@@ -127,7 +127,12 @@ bool init_interrupts() {
     for (int i = 0; i < 256; i++) {
         IDT[i].selector = 0x8;
         IDT[i].ist = 0;                 // 0: Don't switch stacks
-        IDT[i].type = IST_INT_GATE;
+        switch (i) {
+            case 80:
+                IDT[i].type = IST_TRAP_GATE;
+                break;
+            default:
+                IDT[i].type = IST_INT_GATE;
         IDT[i].protection_level = 0;
         IDT[i].present = 1;
     }
