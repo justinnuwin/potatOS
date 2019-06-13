@@ -58,7 +58,6 @@ page_fault_isr_wrapper:
     iretq
 
 global sys_call_isr_wrapper
-extern sys_call_iinterrupt_handler
 sys_call_isr_wrapper:
     push rbp    ; start new stack frame
     push rsp
