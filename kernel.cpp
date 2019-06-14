@@ -68,8 +68,8 @@ void kernel_main(void *multiboot2_tag) {
 
     printk("Success!\n");
     sti();
-    PROC_create_kthread(test1, 0x0);
     PROC_create_kthread(test0, 0x0);
+    PROC_create_kthread(test1, 0x0);
     kernel_loop(0x0);
 }
 
