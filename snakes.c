@@ -70,7 +70,7 @@ extern void *ckmalloc(int size);
 extern void ckfree(void *addr);
 extern struct cKThread *cPROC_create_kthread(kproc_t entry_point, void *args);
 extern struct cKThread *current_thread;
-extern void yield(void);
+extern void cyield(void);
 extern void ckexit();
 const int VGA_WIDTH = 80;
 const int VGA_HEIGHT = 25;
@@ -249,7 +249,7 @@ void run_hungry_snake(void *arg){
       free_snake(*s);
       ckexit();
     }
-    yield();                /* yield to the next snake */
+    cyield();                /* yield to the next snake */
   }
 }
 
@@ -269,7 +269,7 @@ void run_snake(void *arg){
       free_snake(*s);
       ckexit();
     }
-    yield();                /* yield to the next snake */
+    cyield();                /* yield to the next snake */
   }
 }
 

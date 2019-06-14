@@ -12,6 +12,8 @@
 #include "kmalloc.h"
 #include "threading.h"
 
+extern "C" void setup_snakes();
+
 void wait_a_little() {
     int i = 100000;
     while (i--);
@@ -20,54 +22,6 @@ void wait_a_little() {
 void wait_longer() {
     int i = 50000000;
     while (i--);
-}
-
-void test0(void *arg) {
-    int i = *(int *)arg;
-    while (1) {
-        printk("%d\n", i);
-        i += 4;
-        if (i > 400)
-            break;
-        yield();
-    }
-    kexit();
-}
-
-void test1(void *arg) {
-    int i = *(int *)arg;
-    while (1) {
-        printk("%d\n", i);
-        i += 4;
-        if (i > 400)
-            break;
-        yield();
-    }
-    kexit();
-}
-
-void test2(void *arg) {
-    int i = *(int *)arg;
-    while (1) {
-        printk("%d\n", i);
-        i += 4;
-        if (i > 400)
-            break;
-        yield();
-    }
-    kexit();
-}
-
-void test3(void *arg) {
-    int i = *(int *)arg;
-    while (1) {
-        printk("%d\n", i);
-        i += 4;
-        if (i > 400)
-            break;
-        yield();
-    }
-    kexit();
 }
 
 void kernel_main(void *multiboot2_tag) {
@@ -92,14 +46,7 @@ void kernel_main(void *multiboot2_tag) {
 
     printk("Success!\n");
     sti();
-    int i = 0;
-    PROC_create_kthread(test0, &i);
-    int j = 1;
-    PROC_create_kthread(test1, &j);
-    int k = 2;
-    PROC_create_kthread(test2, &k);
-    int l = 3;
-    PROC_create_kthread(test3, &l);
+    setup_snakes();
     kernel_loop(0x0);
 }
 
