@@ -22,8 +22,27 @@ void wait_longer() {
     while (i--);
 }
 
-void test(void *) {
-    printk("Hello");
+void test0(void *) {
+    int i = 0;
+    while (1) {
+        printk("%d\n", i);
+        i += 2;
+        if (i > 100)
+            break;
+        yield();
+    }
+    kexit();
+}
+
+void test1(void *) {
+    int i = 1;
+    while (1) {
+        printk("%d\n", i);
+        i += 2;
+        if (i > 100)
+            break;
+        yield();
+    }
     kexit();
 }
 
@@ -49,7 +68,8 @@ void kernel_main(void *multiboot2_tag) {
 
     printk("Success!\n");
     sti();
-    PROC_create_kthread(test, 0x0);
+    PROC_create_kthread(test1, 0x0);
+    PROC_create_kthread(test0, 0x0);
     kernel_loop(0x0);
 }
 

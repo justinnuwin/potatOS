@@ -14,7 +14,7 @@ struct KThread {
     uint64_t fs, gs;
     // uint64_t cs, ss, ds, es, fs, gs;
     uint64_t ret_rip, ret_cs, ret_rflags, ret_rsp, ret_ss;
-    struct KThread *next;
+    struct KThread *next, *prev;
     int stack_number;
     void *stack;
     kproc_t entry_point;
@@ -43,9 +43,15 @@ void PROC_create_kthread(kproc_t entry_point, void *args) {
     if (!current_thread) {
         current_thread = thread;
         current_thread->next = thread;
+        current_thread->prev = thread;
     } else {
-        thread->next = current_thread->next;
-        current_thread->next = thread;
+        struct KThread *node = current_thread;
+        while (node->next != current_thread)    // Go to tail of linked list with respect to current thread
+            node = node->next;
+        node->next = thread;
+        thread->prev = node;
+        thread->next = current_thread;
+        current_thread->prev = thread;
     }
 }
 
@@ -63,6 +69,8 @@ void kexit() {
     // current_thread is only NULL when exiting
     // next_thread is only used when exiting
     struct KThread *this_thread = current_thread;
+    this_thread->prev->next = this_thread->next;
+    this_thread->next->prev = this_thread->prev;
     next_thread = current_thread->next;
     current_thread = NULL;
     free_stack(this_thread->stack_number);
@@ -75,7 +83,7 @@ inline void PROC_reschedule() {
     if (current_thread)
         current_thread = current_thread->next;
     else
-        current_thread = next_thread->next;
+        current_thread = next_thread;
 }
 
 inline void save_context(struct KThread *thread, void *sp) {
