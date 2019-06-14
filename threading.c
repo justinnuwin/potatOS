@@ -34,7 +34,7 @@ void PROC_create_kthread(kproc_t entry_point, void *args) {
     struct KThread *thread = (struct KThread *)kmalloc(sizeof(*thread));
     threads[stack_number] = thread;
     thread->stack_number = stack_number;
-    thread->stack = (void *)((((uint64_t)1 << 39) | ((uint64_t)stack_number << 30)) - 1);
+    thread->stack = (void *)((((uint64_t)1 << 39) | (((uint64_t)stack_number + 1) << 30)) - 1);
     thread->ret_rsp = (uint64_t)thread->stack;
     thread->ret_cs = 8;
     thread->entry_point = entry_point;
@@ -56,9 +56,7 @@ void init_threading() {
 }
 
 void PROC_run() {
-    if (current_thread) {
-        yield();
-    }
+    yield();
 }
 
 void kexit() {
@@ -70,7 +68,7 @@ void kexit() {
     free_stack(this_thread->stack_number);
     threads[this_thread->stack_number] = NULL;
     kfree(this_thread);
-    PROC_run();
+    yield();
 }
 
 inline void PROC_reschedule() {

@@ -213,13 +213,15 @@ void alloc_stack(union PageTable *ptl3, int l3_idx, int l2_idx) {
         i++;
         ptl2->entryAsAddr[l2_idx] = MMU_pf_alloc();
     }
+    for (int i = 1; i < 512; i++) {   // Ensure pages being allocated are continuous
+        void* temp = MMU_pf_alloc();
+        temp + 1;
+    }
     do {
         MMU_pf_free(not_aligned[i]);
         i--;
     } while (i);
 
-    for (int i = 1; i < 512; i++)   // TODO: Ensure pages being allocated are continuous
-        void* temp = MMU_pf_alloc();
     ptl2->entry[l2_idx].present = 1;        ptl2->entry[l2_idx].rw = 1;
     ptl2->entry[l2_idx].huge = 1;
     asm volatile ("invlpg %0" : : "m"(ptl2->entryAsAddr[l2_idx]));
@@ -232,9 +234,8 @@ void free_stack(int stack_number) {
     for (int i = 0; i < 512; i++) {
         if (ptl2->entry[i].present) {
             ptl2->entry[i].present = 0;
-            for (int j = 1; j < 512; j++)
+            for (int j = 0; j < 512; j++)
                 MMU_pf_free((void *)((uint64_t)ptl2->entryAsAddr[i] & PAGETABLEADDRMASK + 4096 * j));
-            MMU_pf_free((void *)((uint64_t)ptl2->entryAsAddr[i] & PAGETABLEADDRMASK));
         }
     }
 }
