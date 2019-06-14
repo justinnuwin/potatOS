@@ -8,7 +8,14 @@
 
 #define MAX_NUM_THREADS 512      // Set by number of PTL3 entries reserved for kernel stacks
 
+static void yield(void) {
+    asm volatile ("mov %0, %%rdi" : : "ND"(SYSCALL_SCHED_YIELD));
+    asm volatile ("int $0x80");
+}
+
 int current_pid_inc = 0;
+
+struct KThread *current_thread, *next_thread;
 
 struct KThread *threads[MAX_NUM_THREADS] = {0};    // Ignore index 0
 

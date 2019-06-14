@@ -21,16 +21,11 @@ struct KThread {
     int pid;
 } __attribute__ ((packed));
 
-struct KThread *current_thread, *next_thread;
+extern "C"  struct KThread *current_thread, *next_thread;
 
 void init_threading();
 void PROC_run();
 struct KThread *PROC_create_kthread(kproc_t entry_point, void *args);
 void kexit();
-
-inline void yield(void) {
-    asm volatile ("mov %0, %%rdi" : : "ND"(SYSCALL_SCHED_YIELD));
-    asm volatile ("int $0x80");
-}
 
 #endif

@@ -31,8 +31,7 @@
 
 #include "snakes.h"
 #include <stddef.h>
-#include "kmalloc.h"
-#include "threading.h"
+#include <stdint.h>
 
 #define VGA_BLACK 0x00
 #define VGA_BLUE 0x01
@@ -51,8 +50,30 @@
 #define VGA_YELLOW 0x0E
 #define VGA_WHITE 0x0F
 
-extern const int VGA_WIDTH;
-extern const int VGA_HEIGHT;
+typedef void (*kproc_t)(void *);
+
+struct cKThread {
+    uint64_t rax, rbx, rcx, rdx, rdi, rsi;
+    uint64_t r8, r9, r10, r11, r12, r13, r14, r15;
+    uint64_t fs, gs;
+    // uint64_t cs, ss, ds, es, fs, gs;
+    uint64_t ret_rip, ret_cs, ret_rflags, ret_rsp, ret_ss;
+    struct cKThread *next, *prev;
+    int stack_number;
+    void *stack;
+    kproc_t entry_point;
+    void *args;
+    int pid;
+} __attribute__ ((packed));
+
+extern void *ckmalloc(int size);
+extern void ckfree(void *addr);
+extern struct cKThread *cPROC_create_kthread(kproc_t entry_point, void *args);
+extern struct cKThread *current_thread;
+extern void yield(void);
+extern void ckexit();
+const int VGA_WIDTH = 80;
+const int VGA_HEIGHT = 25;
 void clear_screen();
 void VGA_display_attr_char(int x, int y, char c, int fg, int bg);
 
@@ -123,16 +144,16 @@ snake new_snake(int y, int x, int len, int dir, int color) {
   x = limit(x,0,cols-1);
 
   /* now get the snake */
-  if ( !(new = (snake) kmalloc(sizeof(struct snake_st))) ) {
+  if ( !(new = (snake) ckmalloc(sizeof(struct snake_st))) ) {
     return NULL;
   }
 
   new->dir = dir;
   new->len = len;
   new->color = color;
-  new->body = (sn_point*)kmalloc(new->len * sizeof(sn_point));
+  new->body = (sn_point*)ckmalloc(new->len * sizeof(sn_point));
   if ( !new->body ) {
-    kfree(new);
+    ckfree(new);
     return NULL;
   }
 
@@ -167,8 +188,8 @@ void free_snake(snake s){
     }
   }
   /* now free the parts of s */
-  kfree(s->body);
-  kfree(s);
+  ckfree(s->body);
+  ckfree(s);
 }
 
 sn_point food={-1,-1};           /* the location of the food */
@@ -217,7 +238,7 @@ void run_hungry_snake(void *arg){
       /* now check to see if we're "full" */
       if ( (*s)->color > MAX_VISIBLE_SNAKE ) {
         free_snake(*s);
-        kexit();
+        ckexit();
       }
       draw_snake(*s);
     }
@@ -226,7 +247,7 @@ void run_hungry_snake(void *arg){
       endsnake=0;               /* clear the flag */
       erase_snake(*s);
       free_snake(*s);
-      kexit();
+      ckexit();
     }
     yield();                /* yield to the next snake */
   }
@@ -246,7 +267,7 @@ void run_snake(void *arg){
       endsnake=0;               /* clear the flag */
       erase_snake(*s);
       free_snake(*s);
-      kexit();
+      ckexit();
     }
     yield();                /* yield to the next snake */
   }
@@ -465,7 +486,7 @@ void setup_snakes(int hungry)
 {
    int i,cnt;
    static snake s[MAXSNAKES];
-   struct KThread *snake;
+   struct cKThread *snake;
 
    // Don't use this seed for anything meaningful
    srand(current_thread->pid);
@@ -490,7 +511,7 @@ void setup_snakes(int hungry)
 
    /* turn each snake loose as an individual LWP */            
    for(i=0; i<cnt; i++) {                                        
-      snake = PROC_create_kthread(hungry ? run_hungry_snake : run_snake, &s[i]);    
+      snake = cPROC_create_kthread(hungry ? run_hungry_snake : run_snake, &s[i]);    
       if (snake)
          s[i]->pid = snake->pid;
    }                                                           

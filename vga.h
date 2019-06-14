@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-const int VGA_WIDTH = 80;
-const int VGA_HEIGHT = 25;
+static const int VGA_WIDTH = 80;
+static const int VGA_HEIGHT = 25;
 
 extern "C" enum vga_color {
 	VGA_BLACK = 0,
