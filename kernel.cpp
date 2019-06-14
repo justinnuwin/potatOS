@@ -37,6 +37,7 @@ void kernel_main(void *multiboot2_tag) {
     read_multiboot2_tags(multiboot2_tag);
     MMU_pf_init();
     init_heap();
+    init_threading();
     wait_longer();
     clear_screen();
 
@@ -48,7 +49,12 @@ void kernel_main(void *multiboot2_tag) {
     printk("Success!\n");
     sti();
     PROC_create_kthread(test, 0x0);
+    kernel_loop(0x0);
+}
+
+void kernel_loop(void * args) {
     while (1) {
         PROC_run();
     }
+    //halt;
 }

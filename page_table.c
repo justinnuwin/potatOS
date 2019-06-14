@@ -75,24 +75,10 @@ extern "C" union PageTable p3_table;
  *  32    |                     | 
  */
 union PageTable *PTL4;  // Page Map Level 4 Table (PML4)
-extern "C" void *kstack1 = (void *)(1 << 39);       // Layer 4 idx is 9 + 9 + 9 + 12 = 39
-extern "C" void *kstack2 = (void *)(2 << 39);
-extern "C" void *kstack3 = (void *)(3 << 39);
-extern "C" void *kstack4 = (void *)(4 << 39);
-extern "C" void *kstack5 = (void *)(5 << 39);
-extern "C" void *kstack6 = (void *)(6 << 39);
-extern "C" void *kstack7 = (void *)(7 << 39);
-extern "C" void *kstack8 = (void *)(8 << 39);
-extern "C" void *kstack9 = (void *)(9 << 39);
-extern "C" void *kstack10 = (void *)(10 << 39);
-extern "C" void *kstack11 = (void *)(11 << 39);
-extern "C" void *kstack12 = (void *)(12 << 39);
-extern "C" void *kstack13 = (void *)(13 << 39);
-extern "C" void *kstack14 = (void *)(14 << 39);
-const int heap_l4_idx = 15;
-int heap_l3_idx = 0;
-int heap_l2_idx = 0;
-int heap_l1_idx = 0;
+const unsigned long long heap_l4_idx = 15;
+unsigned long heap_l3_idx = 0;
+unsigned long long heap_l2_idx = 0;
+unsigned long long heap_l1_idx = 0;
 
 // Page Directory Pointer Table (PDP)
 // Page Directory Table (PT)
@@ -175,8 +161,7 @@ void init_identity_map_table() {
     for (int i = 1; i < 512; i++) {
         union PageTable *ptl2 = (union PageTable *)MMU_pf_alloc();
         p3_table.entryAsAddr[i] = (void *)ptl2;
-        p3_table.entry[i].present = 1;
-        p3_table.entry[i].rw = 1;
+        p3_table.entry[i].present = 1;      p3_table.entry[i].rw = 1;
         for (int j = 0; j < 512; j++) {
             ptl2->entryAsAddr[j] = (void *)(0x200000 * j + 0x40000000 * i);      // 2MiB := 0x20 0000     1GiB := 0x4000 0000
             ptl2->entry[j].present = 1;
@@ -204,9 +189,29 @@ void init_heap_pt() {
 }
 
 void init_stacks_pt() {
-   for (int i = 1; i < 15; i++) {
-      PTL4->entry[i].present = 1;    PTL4->entry[i].rw = 1;
-   }
+    // TODO: Add support for using stacks in PTL4[2 - 14]
+    union PageTable *ptl3 = (union PageTable *)MMU_pf_alloc();
+    PTL4->entryAsAddr[1] = (void *)ptl3;
+    PTL4->entry[1].present = 1;    PTL4->entry[1].rw = 1;
+    for (int i  = 0; i < 512; i++) {
+        union PageTable *ptl2 = (union PageTable *)MMU_pf_alloc();
+        ptl3->entryAsAddr[i] = (void *)ptl2;
+        ptl3->entry[i].present = 1;    ptl3->entry[i].rw = 1;
+    }
+}
+
+void alloc_stack(union PageTable *ptl3, int l3_idx, int l2_idx) {
+    if (!ptl3->entryAsAddr[l3_idx]) {
+        union PageTable *ptl2 = (union PageTable *)MMU_pf_alloc();
+        ptl3->entryAsAddr[l3_idx] = (void *)ptl2;
+        ptl3->entry[l3_idx].present = 1;    ptl3->entry[l3_idx].rw = 1;
+    }
+    union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
+    ptl2->entryAsAddr[l2_idx] = MMU_pf_alloc();
+    for (int i = 1; i < 512; i++)   // TODO: Ensure pages being allocated are continuous
+        MMU_pf_alloc();
+    ptl2->entry[l2_idx].present = 1;        ptl2->entry[l2_idx].rw = 1;
+    ptl2->entry[l2_idx].huge = 1;
 }
 
 void MMU_pf_init() {
@@ -306,13 +311,11 @@ void page_fault_interrupt_handler(uint32_t code, uint64_t cr2) {
     union PageTable *ptl3 = (union PageTable *)get_address(PTL4, l4_idx);
     // Heap allocator should already mark L4 - L2 as present and rw
     // Stack will need to be set on the fly
-    if (!(ptl3->entry[l3_idx].present) && l4_idx < 15) {
-        ptl3->entry[l3_idx].present = 1;    ptl3->entry[l3_idx].rw = 1;
+    if (l4_idx > 0 && l4_idx < 15) {
+        alloc_stack(ptl3, l3_idx, l2_idx);
+        return;
     }
     union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
-    if (!(ptl2->entry[l2_idx].present) && l4_idx < 15) {
-        ptl2->entry[l2_idx].present = 1;    ptl2->entry[l2_idx].rw = 1;
-    }
     union PageTable *ptl1 = (union PageTable *)get_address(ptl2, l2_idx);
     ptl1->entryAsAddr[l1_idx] = MMU_pf_alloc();
     ptl1->entry[l1_idx].present = 1;    ptl1->entry[l1_idx].rw = 1;
