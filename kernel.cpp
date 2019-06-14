@@ -24,6 +24,7 @@ void wait_longer() {
 
 void test(void *) {
     printk("Hello");
+    kexit();
 }
 
 void kernel_main(void *multiboot2_tag) {

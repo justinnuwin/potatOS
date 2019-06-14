@@ -225,6 +225,20 @@ void alloc_stack(union PageTable *ptl3, int l3_idx, int l2_idx) {
     asm volatile ("invlpg %0" : : "m"(ptl2->entryAsAddr[l2_idx]));
 }
 
+void free_stack(int stack_number) {
+    union PageTable *ptl3 = (union PageTable *)get_address(PTL4, 1);
+    ptl3->entry[stack_number].present = 0;
+    union PageTable *ptl2 = (union PageTable *)get_address(ptl3, stack_number);
+    for (int i = 0; i < 512; i++) {
+        if (ptl2->entry[i].present) {
+            ptl2->entry[i].present = 0;
+            for (int j = 1; j < 512; j++)
+                MMU_pf_free((void *)((uint64_t)ptl2->entryAsAddr[i] & PAGETABLEADDRMASK + 4096 * j));
+            MMU_pf_free((void *)((uint64_t)ptl2->entryAsAddr[i] & PAGETABLEADDRMASK));
+        }
+    }
+}
+
 void MMU_pf_init() {
     current_page = multiboot2_memory_map[0].start;
     PTL4 = &p4_table;

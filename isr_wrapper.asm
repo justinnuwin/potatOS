@@ -65,7 +65,6 @@ sys_call_isr_wrapper:
     ; RFlags
     ; Return CS
     ; RIP
-    push rbp
     push gs
     push fs
     push r15
@@ -83,8 +82,7 @@ sys_call_isr_wrapper:
     push rbx
     push rax
     
-    ; TODO: Get syscall number from previous stack
-    mov rdi, rsp
+    mov rsi, rsp
     call sys_call_interrupt_handler
     pop rax
     pop rbx
@@ -106,7 +104,6 @@ sys_call_isr_wrapper:
     ;pop es
     pop fs
     pop gs
-    pop rbp
 
     iretq
 

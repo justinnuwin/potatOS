@@ -138,8 +138,9 @@ bool init_interrupts() {
         IDT[i].present = 1;
     }
     IDT[0x8].ist = 1;       // #DF Use stack 1
-    IDT[0xd].ist = 2;       // #GP Use stack 1
-    IDT[0xe].ist = 1;       // #PF Use stack 1
+    IDT[0xd].ist = 2;       // #GP Use stack 2
+    IDT[0xe].ist = 3;       // #PF Use stack 3
+    IDT[0x80].ist = 4;      // #PF Use stack 4
     load_generic_isr();
     lidt(&IDT, (uint16_t)sizeof(IDT) - 1);
     return are_interrupts_enabled();
