@@ -7,8 +7,6 @@
 
 VGA VGA::vga;
 
-static const int VGA_WIDTH = 80;
-static const int VGA_HEIGHT = 25;
 static uint16_t *const VGA_BUFFER_BASE_ADDR = (uint16_t *)0xb8000;
 
 void init_VGA() {
@@ -40,13 +38,13 @@ void VGA::fill(enum vga_color color) {
     int count = VGA_WIDTH * VGA_HEIGHT;
     uint16_t *buffer = VGA_BUFFER_BASE_ADDR;
     while (count--) {
-        *buffer = vga_char(' ', VGA_COLOR_BLACK, color, false);
+        *buffer = vga_char(' ', VGA_BLACK, color, false);
         buffer++;
     }
 }
 
 void VGA::clear() {
-    fill(VGA_COLOR_BLACK);
+    fill(VGA_BLACK);
     cursor_row = 0;
     cursor_col = 0;
     cursor_buffer = coord_to_addr(0, 0);
@@ -57,11 +55,11 @@ void VGA::scroll(enum vga_color color) {
            VGA_WIDTH * (VGA_HEIGHT - 1) * sizeof(*VGA_BUFFER_BASE_ADDR));
     uint16_t *last_row = coord_to_addr(VGA_HEIGHT - 1, 0);
     for (int i = 0; i < VGA_WIDTH; i++)
-        last_row[i] = vga_char(' ', VGA_COLOR_BLACK, color, false);
+        last_row[i] = vga_char(' ', VGA_BLACK, color, false);
 }
 
 void VGA::scroll() {
-    scroll(VGA_COLOR_BLACK);
+    scroll(VGA_BLACK);
 }
 
 // Do NOT call increment_cursor after this if displaying \n or \r
@@ -82,8 +80,17 @@ void VGA::display_char(char c, enum vga_color fg, enum vga_color bg) {
     cursor_buffer = coord_to_addr();
 }
 
+void VGA::display_char_loc(int x, int y, char c, enum vga_color fg, enum vga_color bg) {
+    cursor_buffer = coord_to_addr(y, x);
+    display_char(c, fg, bg); 
+}
+
+void VGA_display_attr_char(int x, int y, char c, enum vga_color fg, enum vga_color bg) {
+    VGA::vga.display_char_loc(x, y, c, fg, bg);
+}
+
 void VGA::display_char(char c) {
-    display_char(c, VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+    display_char(c, VGA_WHITE, VGA_BLACK);
 }
 
 void VGA::increment_cursor(enum vga_color bg) {
@@ -99,7 +106,7 @@ void VGA::increment_cursor(enum vga_color bg) {
 }
 
 void VGA::increment_cursor() {
-    increment_cursor(VGA_COLOR_BLACK);
+    increment_cursor(VGA_BLACK);
 }
 
 void VGA::display_string(const char *str, enum vga_color fg, enum vga_color bg) {
@@ -111,7 +118,7 @@ void VGA::display_string(const char *str, enum vga_color fg, enum vga_color bg) 
 }
 
 void VGA::display_string(const char *str) {
-    display_string(str, VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+    display_string(str, VGA_WHITE, VGA_BLACK);
 }
 
 void clear_screen() {
@@ -146,5 +153,5 @@ void splash_screen() {
 \n\r                       '\"'     `-----'   `-----'     '\"'\
 \r";
     clear_screen();
-    VGA::vga.display_string(ascii_art, VGA_COLOR_BROWN, VGA_COLOR_BLACK);
+    VGA::vga.display_string(ascii_art, VGA_BROWN, VGA_BLACK);
 }

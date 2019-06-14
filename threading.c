@@ -8,20 +8,7 @@
 
 #define MAX_NUM_THREADS 512      // Set by number of PTL3 entries reserved for kernel stacks
 
-struct KThread {
-    uint64_t rax, rbx, rcx, rdx, rdi, rsi;
-    uint64_t r8, r9, r10, r11, r12, r13, r14, r15;
-    uint64_t fs, gs;
-    // uint64_t cs, ss, ds, es, fs, gs;
-    uint64_t ret_rip, ret_cs, ret_rflags, ret_rsp, ret_ss;
-    struct KThread *next, *prev;
-    int stack_number;
-    void *stack;
-    kproc_t entry_point;
-    void *args;
-} __attribute__ ((packed));
-
-struct KThread *current_thread, *next_thread;
+int current_pid_inc = 0;
 
 struct KThread *threads[MAX_NUM_THREADS] = {0};    // Ignore index 0
 
@@ -41,6 +28,8 @@ void PROC_create_kthread(kproc_t entry_point, void *args) {
     thread->ret_rip = (uint64_t)entry_point;
     thread->args = args;
     thread->rdi = (uint64_t)args;
+    thread->pid = current_pid_inc;
+    current_pid_inc++;
     if (!current_thread) {
         current_thread = thread;
         current_thread->next = thread;

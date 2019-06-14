@@ -6,7 +6,7 @@ LD=x86_64-elf-ld
 LDFLAGS=-n -g
 HOME=/home/cpe454/potatOS/
 
-OBJECTS=multiboot_header.o boot.o long_mode_init.o kernel.o string.o vga.o printk.o ps2.o keyboard.o interrupt.o isr_wrapper.o generic_isr.o gdt.o serial.o multiboot2_tags.o page_table.o kmalloc.o threading.o syscall.o
+OBJECTS=multiboot_header.o boot.o long_mode_init.o kernel.o string.o vga.o printk.o ps2.o keyboard.o interrupt.o isr_wrapper.o generic_isr.o gdt.o serial.o multiboot2_tags.o page_table.o kmalloc.o threading.o syscall.o snakes.o
 
 potatOS.img: kernel.bin
 	dd if=/dev/zero of=$@ bs=512 count=32768
@@ -84,6 +84,9 @@ threading.o: threading.c threading.h
 	$(CC) -o $@ $(CFLAGS) $<
 
 syscall.o: syscall.c syscall.h
+	$(CC) -o $@ $(CFLAGS) $<
+
+snakes.o: snakes.c snakes.h
 	$(CC) -o $@ $(CFLAGS) $<
 
 .PHONY: clean

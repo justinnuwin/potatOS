@@ -30,11 +30,9 @@
  */
 
 #include "snakes.h"
-#include "types.h"
 #include "kmalloc.h"
-#include "vga_console.h"
-#include "asm.h"
-#include "proc.h"
+#include "vga.h"
+#include "threading.h"
 
 #define SN_LENGTH 10
 #define SN_BODY_CHAR '*'
@@ -42,7 +40,6 @@
 #define SN_FOOD_COLOR 7
 
 #define MAXSNAKES  100
-
 
 static void erase_snake(snake s);
 static void draw_snake(snake s);
@@ -437,7 +434,7 @@ snake snakeFromLWpid(int lw_pid){
    */
   snake s;
   for(s=allsnakes;s;s=s->others)
-    if ( s->pid == curr_proc->pid )
+    if ( s->pid == current_thread->pid )
       break;
   return s;
 }
@@ -449,9 +446,9 @@ void setup_snakes(int hungry)
    struct Process *snake;
 
    // Don't use this seed for anything meaningful
-   srand(curr_proc->pid);
-   rows = VGA_row_count();
-   cols = VGA_col_count();
+   srand(current_thread->pid);
+   rows = VGA_HEIGHT;
+   cols = VGA_WIDTH;
 
    /* Initialize Snakes */                                     
    cnt = 0;                                                    
@@ -466,7 +463,7 @@ void setup_snakes(int hungry)
    s[cnt++] = new_snake( 4,40,10, S,7);                        
 
    /* Draw each snake */                                       
-   VGA_clear();
+   clear_screen();
    draw_all_snakes();                                          
 
    /* turn each snake loose as an individual LWP */            
