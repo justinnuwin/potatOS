@@ -10,6 +10,7 @@
 #include "multiboot2_tags.h"
 #include "page_table.h"
 #include "kmalloc.h"
+#include "threading.h"
 
 void wait_a_little() {
     int i = 100000;
@@ -19,6 +20,54 @@ void wait_a_little() {
 void wait_longer() {
     int i = 50000000;
     while (i--);
+}
+
+void test0(void *arg) {
+    int i = *(int *)arg;
+    while (1) {
+        printk("%d\n", i);
+        i += 4;
+        if (i > 400)
+            break;
+        yield();
+    }
+    kexit();
+}
+
+void test1(void *arg) {
+    int i = *(int *)arg;
+    while (1) {
+        printk("%d\n", i);
+        i += 4;
+        if (i > 400)
+            break;
+        yield();
+    }
+    kexit();
+}
+
+void test2(void *arg) {
+    int i = *(int *)arg;
+    while (1) {
+        printk("%d\n", i);
+        i += 4;
+        if (i > 400)
+            break;
+        yield();
+    }
+    kexit();
+}
+
+void test3(void *arg) {
+    int i = *(int *)arg;
+    while (1) {
+        printk("%d\n", i);
+        i += 4;
+        if (i > 400)
+            break;
+        yield();
+    }
+    kexit();
 }
 
 void kernel_main(void *multiboot2_tag) {
@@ -32,6 +81,7 @@ void kernel_main(void *multiboot2_tag) {
     read_multiboot2_tags(multiboot2_tag);
     MMU_pf_init();
     init_heap();
+    init_threading();
     wait_longer();
     clear_screen();
 
@@ -42,19 +92,20 @@ void kernel_main(void *multiboot2_tag) {
 
     printk("Success!\n");
     sti();
-    int *a = (int *)kmalloc(sizeof(int) * 500);
-    int *b = (int *)kmalloc(sizeof(int) * 10);
-    int *c = (int *)kmalloc(sizeof(int) * 500);
-    int *d = (int *)kmalloc(sizeof(int) * 16);
-    kfree(a);
-    a = (int *)kmalloc(sizeof(int) * 500);
-    void *z = kmalloc(1);
-    void *y = kmalloc(32);
-    void *x = kmalloc(64);
-    void *w = kmalloc(128);
-    void *q = kmalloc(256);
-    void *u = kmalloc(512);
-    void *n = kmalloc(1024);
+    int i = 0;
+    PROC_create_kthread(test0, &i);
+    int j = 1;
+    PROC_create_kthread(test1, &j);
+    int k = 2;
+    PROC_create_kthread(test2, &k);
+    int l = 3;
+    PROC_create_kthread(test3, &l);
+    kernel_loop(0x0);
+}
+
+void kernel_loop(void * args) {
     while (1) {
+        PROC_run();
     }
+    //halt;
 }

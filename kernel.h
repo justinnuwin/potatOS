@@ -7,6 +7,7 @@
 
 extern "C" {
     void kernel_main(void *multiboot2_tag);
+    void kernel_loop(void *args);
 }
 
 #endif
