@@ -65,7 +65,6 @@ sys_call_isr_wrapper:
     ; RFlags
     ; Return CS
     ; RIP
-    push rsp
     push rbp
     push gs
     push fs
@@ -108,7 +107,6 @@ sys_call_isr_wrapper:
     pop fs
     pop gs
     pop rbp
-    pop rsp
 
     iretq
 

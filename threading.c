@@ -12,8 +12,8 @@ struct KThread {
     uint64_t r8, r9, r10, r11, r12, r13, r14, r15;
     uint64_t fs, gs;
     // uint64_t cs, ss, ds, es, fs, gs;
-    uint64_t rbp, rsp;
-    uint64_t rip, ret_cs, rflags, ret_rsp, ret_ss;
+    uint64_t rbp;
+    uint64_t ret_rip, ret_cs, ret_rflags, ret_rsp, ret_ss;
     struct KThread *next;
     void *stack;
     kproc_t entry_point;
@@ -34,9 +34,10 @@ void PROC_create_kthread(kproc_t entry_point, void *args) {
     threads[stack_number] = thread;
     thread->stack = (void *)((((uint64_t)1 << 39) | ((uint64_t)stack_number << 30)) - 1);
     thread->ret_rsp = (uint64_t)thread->stack;
+    thread->rbp = (uint64_t)thread->stack;
     thread->ret_cs = 8;
     thread->entry_point = entry_point;
-    thread->rip = (uint64_t)entry_point;
+    thread->ret_rip = (uint64_t)entry_point;
     thread->args = args;
     if (!current_thread) {
         current_thread = thread;
@@ -63,10 +64,8 @@ void kexit();
 
 extern "C" void sys_call_interrupt_handler(void *rsp) {
     // Save current context
-    memcpy(current_thread, rsp, 23 * sizeof(uint64_t));
+    memcpy(current_thread, rsp, 22 * sizeof(uint64_t));
     // Load next context
-    current_thread->next->rbp = current_thread->rbp;
-    current_thread->next->rsp = current_thread->rsp;
-    memcpy(rsp, current_thread->next, 23 * sizeof(uint64_t));
+    memcpy(rsp, current_thread->next, 22 * sizeof(uint64_t));
     current_thread = current_thread->next;
 }

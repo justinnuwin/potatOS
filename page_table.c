@@ -141,14 +141,14 @@ void *MMU_pf_alloc() {
 }
 
 void MMU_pf_free(void *address) {
+    struct FreePageLinkList *freed_page = (struct FreePageLinkList *)address;
     if (!free_pages_head) {
-        free_pages_head = (struct FreePageLinkList *)address;
+        free_pages_head = freed_page;
         free_pages_head->next = NULL;
     } else {
-        struct FreePageLinkList *node = free_pages_head;
-        while (node->next)
-            node = node->next;
-        node->next = (struct FreePageLinkList *)address;
+        struct FreePageLinkList *old_head = free_pages_head;
+        free_pages_head = freed_page;
+        freed_page->next = old_head;
     }
 }
 
@@ -193,11 +193,6 @@ void init_stacks_pt() {
     union PageTable *ptl3 = (union PageTable *)MMU_pf_alloc();
     PTL4->entryAsAddr[1] = (void *)ptl3;
     PTL4->entry[1].present = 1;    PTL4->entry[1].rw = 1;
-    for (int i  = 0; i < 512; i++) {
-        union PageTable *ptl2 = (union PageTable *)MMU_pf_alloc();
-        ptl3->entryAsAddr[i] = (void *)ptl2;
-        ptl3->entry[i].present = 1;    ptl3->entry[i].rw = 1;
-    }
 }
 
 void alloc_stack(union PageTable *ptl3, int l3_idx, int l2_idx) {
@@ -205,13 +200,29 @@ void alloc_stack(union PageTable *ptl3, int l3_idx, int l2_idx) {
         union PageTable *ptl2 = (union PageTable *)MMU_pf_alloc();
         ptl3->entryAsAddr[l3_idx] = (void *)ptl2;
         ptl3->entry[l3_idx].present = 1;    ptl3->entry[l3_idx].rw = 1;
+        asm volatile ("invlpg %0" : : "m"(ptl3->entryAsAddr[l3_idx]));
     }
     union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
+
+    // TODO: Implement a faster way to get a 2MiB aligned page
+    void *not_aligned[512] = {0};
+    int i = 0;
     ptl2->entryAsAddr[l2_idx] = MMU_pf_alloc();
+    while (((uint64_t)ptl2->entryAsAddr[l2_idx] & 0x1fffff) != 0) {           // Huge pages need to be 2MiB aligned
+        not_aligned[i] = ptl2->entryAsAddr[l2_idx];
+        i++;
+        ptl2->entryAsAddr[l2_idx] = MMU_pf_alloc();
+    }
+    do {
+        MMU_pf_free(not_aligned[i]);
+        i--;
+    } while (i);
+
     for (int i = 1; i < 512; i++)   // TODO: Ensure pages being allocated are continuous
-        MMU_pf_alloc();
+        void* temp = MMU_pf_alloc();
     ptl2->entry[l2_idx].present = 1;        ptl2->entry[l2_idx].rw = 1;
     ptl2->entry[l2_idx].huge = 1;
+    asm volatile ("invlpg %0" : : "m"(ptl2->entryAsAddr[l2_idx]));
 }
 
 void MMU_pf_init() {
@@ -314,10 +325,11 @@ void page_fault_interrupt_handler(uint32_t code, uint64_t cr2) {
     if (l4_idx > 0 && l4_idx < 15) {
         alloc_stack(ptl3, l3_idx, l2_idx);
         return;
+    } else if (l4_idx == 15) {
+        union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
+        union PageTable *ptl1 = (union PageTable *)get_address(ptl2, l2_idx);
+        ptl1->entryAsAddr[l1_idx] = MMU_pf_alloc();
+        ptl1->entry[l1_idx].present = 1;    ptl1->entry[l1_idx].rw = 1;
+        asm volatile ("invlpg %0" : : "m"(ptl1->entryAsAddr[l1_idx]));
     }
-    union PageTable *ptl2 = (union PageTable *)get_address(ptl3, l3_idx);
-    union PageTable *ptl1 = (union PageTable *)get_address(ptl2, l2_idx);
-    ptl1->entryAsAddr[l1_idx] = MMU_pf_alloc();
-    ptl1->entry[l1_idx].present = 1;    ptl1->entry[l1_idx].rw = 1;
-    asm volatile ("invlpg %0" : : "m"(ptl1->entryAsAddr[l1_idx]));
 }
