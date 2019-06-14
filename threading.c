@@ -12,7 +12,7 @@ int current_pid_inc = 0;
 
 struct KThread *threads[MAX_NUM_THREADS] = {0};    // Ignore index 0
 
-void PROC_create_kthread(kproc_t entry_point, void *args) {
+struct KThread *PROC_create_kthread(kproc_t entry_point, void *args) {
     int stack_number;
     for (stack_number = 0; stack_number < MAX_NUM_THREADS; stack_number++) {
         if (!threads[stack_number])
@@ -43,6 +43,7 @@ void PROC_create_kthread(kproc_t entry_point, void *args) {
         thread->next = current_thread;
         current_thread->prev = thread;
     }
+    return thread;
 }
 
 extern "C" void sys_call_isr_wrapper(void);

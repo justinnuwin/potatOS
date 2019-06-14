@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-static const int VGA_WIDTH = 80;
-static const int VGA_HEIGHT = 25;
+const int VGA_WIDTH = 80;
+const int VGA_HEIGHT = 25;
 
-enum vga_color {
+extern "C" enum vga_color {
 	VGA_BLACK = 0,
 	VGA_BLUE = 1,
 	VGA_GREEN = 2,
@@ -21,7 +21,7 @@ enum vga_color {
 	VGA_LIGHT_CYAN = 11,
 	VGA_LIGHT_RED = 12,
 	VGA_LIGHT_MAGENTA = 13,
-	VGA_LIGHT_YELLOW = 14,
+	VGA_YELLOW = 14,
 	VGA_WHITE = 15,
 };
 
@@ -36,8 +36,8 @@ class VGA {
     void display_char(char c);
     void display_string(const char *str, enum vga_color fg, enum vga_color bg);
     void display_string(const char *str);
-    private:
     static VGA vga;
+    private:
     unsigned cursor_row;
     unsigned cursor_col;
     uint16_t *cursor_buffer;
@@ -49,20 +49,19 @@ class VGA {
     void increment_cursor();
 
     friend void init_VGA();
-    friend void clear_screen();
+    // friend void clear_screen();
     friend void fill_screen(enum vga_color color);
     friend void splash_screen();
     friend int printk(const char *fmt, ...);
     friend int atoi_display(unsigned long long abs_value);
     friend int print_decimal(int value);
     friend int atoi_base16_display(uint64_t value, char a);
-    friend void VGA_display_attr_char(int x, int y, char c, enum vga_color fg, enum vga_color bg);
 };
 
 void init_VGA();
-void clear_screen();
+extern "C" void clear_screen();
 void fill_screen(enum vga_color color);
 void splash_screen();
-void VGA_display_attr_char(int x, int y, char c, enum vga_color fg, enum vga_color bg);
+extern "C" void VGA_display_attr_char(int x, int y, char c, int fg, int bg);
 
 #endif

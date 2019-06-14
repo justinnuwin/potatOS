@@ -85,8 +85,8 @@ void VGA::display_char_loc(int x, int y, char c, enum vga_color fg, enum vga_col
     display_char(c, fg, bg); 
 }
 
-void VGA_display_attr_char(int x, int y, char c, enum vga_color fg, enum vga_color bg) {
-    VGA::vga.display_char_loc(x, y, c, fg, bg);
+extern "C" void VGA_display_attr_char(int x, int y, char c, int fg, int bg) {
+    VGA::vga.display_char_loc(x, y, c, (enum vga_color)fg, (enum vga_color)bg);
 }
 
 void VGA::display_char(char c) {
@@ -121,7 +121,7 @@ void VGA::display_string(const char *str) {
     display_string(str, VGA_WHITE, VGA_BLACK);
 }
 
-void clear_screen() {
+extern "C" void clear_screen() {
     VGA::vga.clear();
 }
 

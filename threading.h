@@ -25,7 +25,7 @@ struct KThread *current_thread, *next_thread;
 
 void init_threading();
 void PROC_run();
-void PROC_create_kthread(kproc_t entry_point, void *args);
+struct KThread *PROC_create_kthread(kproc_t entry_point, void *args);
 void kexit();
 
 inline void yield(void) {

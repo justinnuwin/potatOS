@@ -1,5 +1,6 @@
 AS=nasm
 ASFLAGS=-f elf64
+C=x86_64-elf-gcc
 CC=x86_64-elf-g++
 CFLAGS=-ffreestanding -mno-red-zone -Wall -Wextra -g -c
 LD=x86_64-elf-ld
@@ -87,7 +88,7 @@ syscall.o: syscall.c syscall.h
 	$(CC) -o $@ $(CFLAGS) $<
 
 snakes.o: snakes.c snakes.h
-	$(CC) -o $@ $(CFLAGS) $<
+	$(C) -o $@ $(CFLAGS) $<
 
 .PHONY: clean
 
