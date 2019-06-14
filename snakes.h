@@ -1,8 +1,6 @@
 #ifndef SNAKEH
 #define SNAKEH
 
-namespace Snakes {
-
 typedef enum {NW,N,NE,W,E,SW,S,SE} direction;
 #define NUMDIRS 8
 
@@ -36,7 +34,5 @@ extern unsigned int get_snake_delay();
 extern void         set_snake_delay(unsigned int msec);
 extern snake        snakeFromLWpid(int lw_pid);
 extern void setup_snakes(int);
-
-}   // End namespace Snakes
 
 #endif
