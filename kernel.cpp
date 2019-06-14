@@ -22,24 +22,48 @@ void wait_longer() {
     while (i--);
 }
 
-void test0(void *) {
-    int i = 0;
+void test0(void *arg) {
+    int i = *(int *)arg;
     while (1) {
         printk("%d\n", i);
-        i += 2;
-        if (i > 100)
+        i += 4;
+        if (i > 400)
             break;
         yield();
     }
     kexit();
 }
 
-void test1(void *) {
-    int i = 1;
+void test1(void *arg) {
+    int i = *(int *)arg;
     while (1) {
         printk("%d\n", i);
-        i += 2;
-        if (i > 100)
+        i += 4;
+        if (i > 400)
+            break;
+        yield();
+    }
+    kexit();
+}
+
+void test2(void *arg) {
+    int i = *(int *)arg;
+    while (1) {
+        printk("%d\n", i);
+        i += 4;
+        if (i > 400)
+            break;
+        yield();
+    }
+    kexit();
+}
+
+void test3(void *arg) {
+    int i = *(int *)arg;
+    while (1) {
+        printk("%d\n", i);
+        i += 4;
+        if (i > 400)
             break;
         yield();
     }
@@ -68,8 +92,14 @@ void kernel_main(void *multiboot2_tag) {
 
     printk("Success!\n");
     sti();
-    PROC_create_kthread(test0, 0x0);
-    PROC_create_kthread(test1, 0x0);
+    int i = 0;
+    PROC_create_kthread(test0, &i);
+    int j = 1;
+    PROC_create_kthread(test1, &j);
+    int k = 2;
+    PROC_create_kthread(test2, &k);
+    int l = 3;
+    PROC_create_kthread(test3, &l);
     kernel_loop(0x0);
 }
 

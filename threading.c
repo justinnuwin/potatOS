@@ -40,6 +40,7 @@ void PROC_create_kthread(kproc_t entry_point, void *args) {
     thread->entry_point = entry_point;
     thread->ret_rip = (uint64_t)entry_point;
     thread->args = args;
+    thread->rdi = (uint64_t)args;
     if (!current_thread) {
         current_thread = thread;
         current_thread->next = thread;
